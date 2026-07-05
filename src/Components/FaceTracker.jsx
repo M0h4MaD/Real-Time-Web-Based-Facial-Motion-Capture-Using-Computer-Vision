@@ -1,19 +1,18 @@
 import { useEffect } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 
-export default function FaceTracker({ videoRef, onResults }) {
+export default function FaceTracker({ videoRef, onResults, isActive }) {
   useEffect(() => {
-    let landmarker;
-    let animationFrameId;
+    // if it is not active, do not initialize the tracker
+    if (!isActive) return;
 
+    let landmarker; // Store the landmarker instance
+    let animationFrameId; // Store the animation frame ID for cleanup
+
+    // Initialize the FaceLandmarker (THE ENGINE THAT TRACKS THE FACE)
     async function init() {
       try {
-        console.log("DEBUG: Initializing MediaPipe...");
-
-        // 1. تحميل أدوات MediaPipe من المسار المحلي /wasm
         const vision = await FilesetResolver.forVisionTasks("/wasm");
-
-        // 2. إعداد المودل
         landmarker = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: `/face_landmarker.task`,
@@ -22,63 +21,63 @@ export default function FaceTracker({ videoRef, onResults }) {
           runningMode: "VIDEO",
         });
 
-        // 3. طلب الكاميرا
-        console.log("DEBUG: Requesting camera access...");
+        // Start camera stream
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 640, height: 480 },
         });
 
-        // 4. الربط والتأكد من جهوزية الكاميرا
+        // Checks if the videoRef is available and sets the source object to the stream
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          videoRef.current.srcObject = stream; // srcObject is the stream from the camera
 
-          // انتظار تحميل الميتا داتا لضمان أن الفيديو جاهز للتشغيل
+          // Once the video metadata is loaded, play the video and start predictions
           videoRef.current.onloadedmetadata = async () => {
-            try {
-              await videoRef.current.play();
-              console.log("DEBUG: Video playing. Starting prediction loop...");
-              predict();
-            } catch (err) {
-              console.error("DEBUG: Play failed:", err);
-            }
+            await videoRef.current.play();
+            predict(); // Start the prediction loop
           };
         }
       } catch (err) {
-        console.error("DEBUG: Error in FaceTracker init:", err);
+        console.error("FaceTracker Init Error:", err);
       }
     }
 
-    // دالة التوقع (Loop)
     function predict() {
+      // If the tracker is not active, do not continue predicting
+      if (!isActive) return;
+
+      // Get the video element from the ref and check if it's ready
       const video = videoRef.current;
 
-      // التأكد أن الفيديو لا يزال موجوداً وجاهزاً
+      // readyState === 4 means the video is fully loaded and can be played
+      // readyState === 3 means the video is in the process of loading but can still be played
+      // readyState === 2 means the video is loading but cannot be played yet
+      // readyState === 1 means the video is loading and cannot be played yet
+      // readyState === 0 means the video is not loaded at all
       if (video && video.readyState === 4) {
+
+        // Detects face landmarks for the current video frame
         const results = landmarker.detectForVideo(video, performance.now());
 
+        // If face landmarks are detected, call the onResults callback with the first set of landmarks
         if (results.faceLandmarks?.length > 0) {
-          // إرسال أول وجه تم اكتشافه للمكون الأب
           onResults(results.faceLandmarks[0]);
         }
       }
-
-      // جدولة الإطار التالي (حوالي 15 إطاراً في الثانية كافية جداً للتتبع)
+      // Schedule the next prediction after 60 milliseconds (~16.67 FPS)
       animationFrameId = setTimeout(predict, 60);
     }
 
-    // بدء العملية
-    init();
+    init(); // Start the initialization process
 
-    // التنظيف عند إغلاق الكومبوننت لمنع تسريب الذاكرة
+    // Cleanup function to stop the camera and clear the animation frame when the component unmounts or is deactivated
     return () => {
-      console.log("DEBUG: Cleaning up FaceTracker...");
-      clearTimeout(animationFrameId);
+      clearTimeout(animationFrameId); // Clear the prediction loop
+
       if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+        videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
       }
     };
-  }, [videoRef, onResults]);
+  }, [isActive, videoRef, onResults]);
 
-  // لا يحتاج واجهة، هو معالج خلفي فقط
   return null;
 }
