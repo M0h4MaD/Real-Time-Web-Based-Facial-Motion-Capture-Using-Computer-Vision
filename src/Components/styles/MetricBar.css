@@ -1,0 +1,36 @@
+/* src/Components/styles/MetricBar.css */
+
+.metric-row {
+  margin-bottom: 20px;
+  background: transparent !important; 
+  border: none !important; 
+}
+
+.metric-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  color: #fff;
+  background: transparent !important;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1); 
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff, #0077ff);
+  border-radius: 4px;
+}
+
+span {
+
+  background: transparent !important;
+}

@@ -1,0 +1,43 @@
+/* src/Components/styles/HUD.css */
+.hud-panel {
+  position: absolute;
+  bottom: 20px; /* نزلتها للأسفل لتعطي مساحة أكبر */
+  right: 20px; /* نقلتها لليمين لتكون بعيدة عن الكاميرا */
+  width: 200px; /* كبرنا العرض */
+  background: rgba(0, 0, 0, 0.7); /* غمقنا الخلفية قليلاً لتباين أفضل */
+  backdrop-filter: blur(15px); /* بلور أقوى */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 25px 25px 25px 25px;
+  color: white;
+  font-family: "Segoe UI", sans-serif;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.panel-title {
+    margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+  background: transparent !important;
+}
+
+.action-zone {
+  background: transparent;
+}
+
+.btn-small {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-small:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+}
