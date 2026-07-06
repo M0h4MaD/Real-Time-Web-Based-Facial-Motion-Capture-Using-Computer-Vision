@@ -1,11 +1,11 @@
+// src/Components/TrackingOverlay.jsx
 import { useRef } from 'react';
 import { useTrackingStore } from '../lib/globalStates.js'; 
 import FaceTracker from './FaceTracker';
+import LandmarksOverlay from './LandmarksOverlay'; // استيراد المكون الجديد
 import './styles/TrackingOverlay.css';
 
 export default function TrackingOverlay() {
-
-  // Using Zustand store to manage tracking state
   const { isTracking, toggleTracking } = useTrackingStore(); 
   const videoRef = useRef(null);
 
@@ -18,13 +18,10 @@ export default function TrackingOverlay() {
       {isTracking && (
         <div className='video-wrapper'>
           <video className='video' ref={videoRef} autoPlay playsInline muted />
-          <FaceTracker 
-            videoRef={videoRef} 
-            isActive={isTracking} 
-          />
+          <LandmarksOverlay /> 
+          <FaceTracker videoRef={videoRef} isActive={isTracking} />
         </div>
       )}
     </div>
   );
 }
-
