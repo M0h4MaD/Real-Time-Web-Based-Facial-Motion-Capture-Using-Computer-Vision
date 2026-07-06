@@ -3,7 +3,7 @@ import { useTrackingStore } from '../lib/globalStates.js';
 import FaceTracker from './FaceTracker';
 import './styles/TrackingOverlay.css';
 
-export default function TrackingOverlay({ onResults }) {
+export default function TrackingOverlay() {
 
   // Using Zustand store to manage tracking state
   const { isTracking, toggleTracking } = useTrackingStore(); 
@@ -21,7 +21,6 @@ export default function TrackingOverlay({ onResults }) {
           <FaceTracker 
             videoRef={videoRef} 
             isActive={isTracking} 
-            onResults={onResults} 
           />
         </div>
       )}

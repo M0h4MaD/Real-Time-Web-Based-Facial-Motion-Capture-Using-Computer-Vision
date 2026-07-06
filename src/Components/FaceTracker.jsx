@@ -1,7 +1,11 @@
 import { useEffect } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
+import { useFaceStore } from "../lib/globalStates";
 
-export default function FaceTracker({ videoRef, onResults, isActive }) {
+export default function FaceTracker({ videoRef, isActive }) {
+
+  const {setLandmarks} = useFaceStore((state) => state);
+
   useEffect(() => {
     // if it is not active, do not initialize the tracker
     if (!isActive) return;
@@ -63,7 +67,7 @@ export default function FaceTracker({ videoRef, onResults, isActive }) {
 
         // If face landmarks are detected, call the onResults callback with the first set of landmarks
         if (results.faceLandmarks?.length > 0) {
-          onResults(results.faceLandmarks[0]);
+          setLandmarks(results.faceLandmarks[0]);
         }
       }
       // Schedule the next prediction after 60 milliseconds (~16.67 FPS)
@@ -81,8 +85,10 @@ export default function FaceTracker({ videoRef, onResults, isActive }) {
         videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
       }
     };
-  }, [isActive, videoRef, onResults]);
+  }, [isActive, videoRef]);
 
+  // Just add landmarks from the store to the console for debugging purposes
+  // console.log("Current Landmarks from FaceTracker:", landmarks); // Log the current landmarks for debugging
 
   // The difference between init() and predict() is that
   // init() is responsible for setting up the FaceLandmarker and starting the video stream,
