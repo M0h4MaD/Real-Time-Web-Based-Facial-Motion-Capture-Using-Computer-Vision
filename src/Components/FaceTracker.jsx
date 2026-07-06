@@ -9,10 +9,12 @@ export default function FaceTracker({ videoRef, onResults, isActive }) {
     let landmarker; // Store the landmarker instance
     let animationFrameId; // Store the animation frame ID for cleanup
 
-    // Initialize the FaceLandmarker (THE ENGINE THAT TRACKS THE FACE)
+    // Initialize the FaceLandmarker and start the camera stream
     async function init() {
       try {
-        const vision = await FilesetResolver.forVisionTasks("/wasm");
+        const vision = await FilesetResolver.forVisionTasks("/wasm"); // Load the necessary files for the vision tasks from the specified path
+        
+        // Create the FaceLandmarker instance with the specified options
         landmarker = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: `/face_landmarker.task`,
@@ -41,6 +43,7 @@ export default function FaceTracker({ videoRef, onResults, isActive }) {
       }
     }
 
+    // Function to predict face landmarks from the video stream
     function predict() {
       // If the tracker is not active, do not continue predicting
       if (!isActive) return;
@@ -64,6 +67,7 @@ export default function FaceTracker({ videoRef, onResults, isActive }) {
         }
       }
       // Schedule the next prediction after 60 milliseconds (~16.67 FPS)
+      // Formula: 1000 ms / 60 ms ≈ 16.67 frames per second
       animationFrameId = setTimeout(predict, 60);
     }
 
@@ -79,5 +83,10 @@ export default function FaceTracker({ videoRef, onResults, isActive }) {
     };
   }, [isActive, videoRef, onResults]);
 
+
+  // The difference between init() and predict() is that
+  // init() is responsible for setting up the FaceLandmarker and starting the video stream,
+  // while predict() is called repeatedly to process each frame of the video.
+  // init() called once when the component mounts or when isActive changes to true, while predict() is called in a loop to continuously analyze the video frames.
   return null;
 }
