@@ -1,23 +1,36 @@
 // src/Components/HUD.jsx
-import { useFaceStore } from '../lib/globalStates.js';
-import MetricBar from './MetricBar.jsx'; // استيراد المكون الجديد
-import './styles/HUD.css';
+import { useFaceStore, useUIStore } from "../lib/globalStates.js";
+import MetricBar from "./MetricBar.jsx"; // استيراد المكون الجديد
+import "./styles/HUD.css";
 
 export default function HUD() {
-  const metrics = useFaceStore((state) => state.metrics);
+  const { metrics } = useFaceStore();
+  const { isHUDVisible, toggleHUD, toggleLandmarks } = useUIStore();
 
   return (
-    <div className="hud-panel">
-      <h3 className='panel-title'>System Status</h3>
-      
-      {/* هنا بنستخدم المكون بكل بساطة */}
-      <MetricBar label="Yaw Rotation" value={metrics.yaw} />
-      <MetricBar label="Mouth Open" value={metrics.mouth} />
-      <MetricBar label="Eye Blink" value={metrics.blink} />
+    <>
+      {/* الأزرار أصبحت هنا، أي تغيير فيها سيؤثر على هذا المكون فقط */}
+      <button className="toggle-btn" onClick={toggleHUD}>
+        {isHUDVisible ? "Hide HUD" : "Show HUD"}
+      </button>
+      <button className="toggle-btn" onClick={toggleLandmarks}>
+        Toggle Landmarks
+      </button>
 
-      <div className="action-zone">
-        <button className="btn-small">Calibrate</button>
-      </div>
-    </div>
+      {isHUDVisible && (
+        <div className="hud-panel">
+          <h3 className="panel-title">System Status</h3>
+
+          {/* هنا بنستخدم المكون بكل بساطة */}
+          <MetricBar label="Yaw Rotation" value={metrics.yaw} />
+          <MetricBar label="Mouth Open" value={metrics.mouth} />
+          <MetricBar label="Eye Blink" value={metrics.blink} />
+
+          <div className="action-zone">
+            <button className="btn-small">Calibrate</button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,31 +1,27 @@
 // src/App.jsx
 import TrackingOverlay from "./Components/TrackingOverlay.jsx";
 import HUD from "./Components/HUD.jsx";
-import { useUIStore } from "./lib/globalStates.js"; // Importing the new UI Store
+
 import "./App.css";
+import { Canvas } from "@react-three/fiber";
+import ModelViewer from "./Components/ModelViewer.jsx";
+import { Stage } from "@react-three/drei";
 
+// App.jsx (نظيف جداً)
 export default function App() {
-  // Get the HUD visibility state and toggle function from the store
-  const { isHUDVisible, toggleHUD } = useUIStore();
-  const toggleLandmarks = useUIStore((state) => state.toggleLandmarks);
-
   return (
     <div className="app-container">
-      {/* Toggle button to show/hide HUD */}
-      <button className="toggle-btn" onClick={toggleHUD}>
-        {isHUDVisible ? "Hide HUD" : "Show HUD"}
-      </button>
-
-      <button className="toggle-btn" onClick={toggleLandmarks}>Toggle Landmarks</button>
-
       <main className="main-content">
-        <h2>3D Tracking Space</h2>
+        <Canvas dpr={[1, 2]} shadows camera={{position:[0,0,1], fov: 45 }}>
+          <Stage environment="city" intensity={0.6}>
+            <ModelViewer />
+          </Stage>
+        </Canvas>
 
-        {/* Conditional rendering: HUD only displays if isHUDVisible is true */}
-        {isHUDVisible && <HUD />}
+        {/* المكون الذي يحتوي على الأزرار والـ HUD */}
+        <HUD />
       </main>
 
-      {/* The TrackingOverlay remains running in the background */}
       <TrackingOverlay />
     </div>
   );
