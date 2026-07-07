@@ -1,5 +1,6 @@
 // src/Components/HUD.jsx
 import { useFaceStore, useUIStore } from "../lib/globalStates.js";
+import CalibrateButton from "./CalibrateButton.jsx";
 import MetricBar from "./MetricBar.jsx"; // استيراد المكون الجديد
 import "./styles/HUD.css";
 
@@ -20,14 +21,14 @@ export default function HUD() {
       {isHUDVisible && (
         <div className="hud-panel">
           <h3 className="panel-title">System Status</h3>
-
+        
           {/* هنا بنستخدم المكون بكل بساطة */}
           <MetricBar label="Yaw Rotation" value={metrics.yaw} />
           <MetricBar label="Mouth Open" value={metrics.mouth} />
           <MetricBar label="Eye Blink" value={metrics.blink} />
 
           <div className="action-zone">
-            <button className="btn-small">Calibrate</button>
+            <CalibrateButton />
           </div>
         </div>
       )}
