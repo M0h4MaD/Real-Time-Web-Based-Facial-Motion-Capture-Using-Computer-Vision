@@ -34,7 +34,7 @@ function ModelViewer() {
 
     // 1. تطبيق دوران الرأس الفراغي
     if (headBone) {
-      if (isValid(mocapData.yaw)) headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, -mocapData.yaw, 0.15);
+      if (isValid(mocapData.yaw)) headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, -mocapData.yaw, 0.15); // If you want it the same as camera remove the minus 
       if (isValid(mocapData.pitch)) headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, mocapData.pitch, 0.15);
       if (isValid(mocapData.roll)) headBone.rotation.z = THREE.MathUtils.lerp(headBone.rotation.z, -mocapData.roll, 0.15);
     }
