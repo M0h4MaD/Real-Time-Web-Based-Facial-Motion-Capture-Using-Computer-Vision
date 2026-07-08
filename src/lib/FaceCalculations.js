@@ -9,7 +9,7 @@ const LM = {
   mouth_Center: 0,     // مركز الشفاه (مغلقة)
   noseTip: 4, 
   noseBridge: 197, 
-  chin: 152,           // الذقن - النقطة المرجعية الجديدة الثابتة
+  chin: 152,           // الذقن - النقطة المرجعية الثابتة المستقرة
   forehead: 10,
   leftCheek: 234, 
   rightCheek: 454,
@@ -19,7 +19,11 @@ const LM = {
   browInnerR: 336
 };
 
-// الدالة هاي بتحسب المسافة الحقيقية بالفراغ 3D، فما بتتأثر بدوران الرأس أبداً
+// 🎥 تعديل ميلان الرأس الافتراضي ليجعل آدم ينظر للشاشة مباشرة أول ما يشتغل
+// إذا وجدته ينظر للأسفل كثيراً قلل الرقم (مثلاً -0.10)، وإذا كان ينظر للأعلى زده (مثلاً -0.18)
+const HEAD_PITCH_OFFSET = -0.15; 
+
+// الدالة تحسب المسافة الحقيقية بالفراغ 3D، فلا تتأثر بدوران الرأس
 const get3DDist = (p1, p2) => Math.hypot((p1.x - p2.x), (p1.y - p2.y), (p1.z - p2.z));
 
 const calculateEAR = (landmarks, indices) => {
@@ -50,8 +54,7 @@ export const processFaceMetrics = (landmarks, baseline = null, isCalibrating = f
   const mouthH = get3DDist(landmarks[LM.mouth_InnerTop], landmarks[LM.mouth_InnerBot]) / faceHeight;
   const mouthW = get3DDist(landmarks[LM.mouth_CornerL], landmarks[LM.mouth_CornerR]) / faceWidth;
 
-  // 🔥 الحل الجذري: قياس المسافة الفراغية بين زوايا الفم والذقن
-  // لما تبتسم: الزوايا بتطلع لفوق وبتبعد عن الذقن. لما تحزن: الزوايا بتنزل وبتقرب من الذقن.
+  // قياس المسافة الفراغية بين زوايا الفم والذقن (ثابتة ومستقرة كما طلبت)
   const distCornerL_Chin = get3DDist(landmarks[LM.mouth_CornerL], landmarks[LM.chin]);
   const distCornerR_Chin = get3DDist(landmarks[LM.mouth_CornerR], landmarks[LM.chin]);
   const avgCornerChinDist = ((distCornerL_Chin + distCornerR_Chin) / 2) / faceHeight;
@@ -69,7 +72,7 @@ export const processFaceMetrics = (landmarks, baseline = null, isCalibrating = f
     onCalibrateComplete({ 
       earL, earR, mouthH, mouthW, avgBrowDist,
       baseInnerBrow: innerBrowDist,
-      baseCornerChin: avgCornerChinDist, // حفظ المسافة الطبيعية بين الزوايا والذقن
+      baseCornerChin: avgCornerChinDist, 
       baseYaw: yawAngle, basePitch: pitchAngle, baseRoll: rollAngle
     });
     return null;
@@ -80,12 +83,13 @@ export const processFaceMetrics = (landmarks, baseline = null, isCalibrating = f
   const b_earR = base.earR ?? 0.3;
   const b_mouthH = base.mouthH ?? 0.015;
   const b_mouthW = base.mouthW ?? 0.35;
-  const b_cornerChin = base.baseCornerChin ?? 0.35; // القيمة المرجعية
+  const b_cornerChin = base.baseCornerChin ?? 0.35; 
   const b_browDist = base.avgBrowDist ?? 0.16;
   const b_innerBrow = base.baseInnerBrow ?? 0.18;
   
   const finalYaw = yawAngle - (base.baseYaw ?? 0);
-  const finalPitch = pitchAngle - (base.basePitch ?? 0);
+  // تطبيق الإزاحة الافتراضية هنا لتصحيح زاوية النظر للكاميرا السفلية
+  const finalPitch = (pitchAngle - (base.basePitch ?? 0)) + HEAD_PITCH_OFFSET;
   const finalRoll = rollAngle - (base.baseRoll ?? 0);
 
   // --- العيون ---
@@ -103,33 +107,44 @@ export const processFaceMetrics = (landmarks, baseline = null, isCalibrating = f
   const browKnitted = deltaInner > 0 ? Math.min(1, deltaInner * 40) : 0;
   const browAngry = Math.min(1, browDown + browKnitted);
 
-  // --- الفم (الأساسي) ---
-  let mouthA = Math.max(0, Math.min(1, (mouthH - b_mouthH) * 14));
-  if (mouthA < 0.04) mouthA = 0; 
+  // --- 🤐 الفم الموزون والمنفصل (الحركة الثقيلة والواقعية) ---
+  // تقليل المضروب لـ 8.5 لجعل فتح الفم أثقل ومقارب للواقع
+  let mouthA = Math.max(0, Math.min(1, (mouthH - b_mouthH) * 8.5));
+  if (mouthA < 0.05) mouthA = 0; // deadzone لمنع الارتعاش والفتحات العشوائية
 
   let pucker = 0;
   if (mouthW < b_mouthW - 0.005) {
-    pucker = Math.max(0, Math.min(1, (b_mouthW - mouthW) * 15));
+    pucker = Math.max(0, Math.min(1, (b_mouthW - mouthW) * 16));
   }
 
-  // --- الابتسامة والحزن (معتمد على المسافة 3D فقط) ---
+  // 🔥 نظام عزل الحركات (Anti-Crosstalk):
+  // لمنع اختلاط الـ O والـ U: عندما تزم شفاهك (Pucker عالي)، نقوم بكبح الـ mouthA تلقائياً
+  let safeMouthA = mouthA;
+  if (pucker > 0.1) {
+    safeMouthA = Math.max(0, mouthA - (pucker * 0.45)); 
+  }
+  
+  // بالمقابل، إذا فتحت فمك بشكل طولي واسع وصافي، نخفف الـ Pucker لتجنب التشويه
+  const safePucker = pucker * (1 - (safeMouthA * 0.6));
+
+  // --- الابتسامة والعبوس (تمت تقويتهما) ---
   let joy = 0;
-  let sorrow = 0;
+  let sad = 0;
   const deltaCornerChin = avgCornerChinDist - b_cornerChin;
   
-  // إذا كبرت المسافة بين الزوايا والذقن (الزوايا ارتفعت) = ابتسامة
   if (deltaCornerChin > 0.003) {
     joy = Math.min(1, deltaCornerChin * 40); 
-  } 
-  // إذا صغرت المسافة (الزوايا نزلت لتحت) = حزن
-  else if (deltaCornerChin < -0.003) {
-    sorrow = Math.min(1, -deltaCornerChin * 40);
+  } else if (deltaCornerChin < -0.002) { // تقليل العتبة لسرعة استجابة العبوس
+    sad = Math.min(1, -deltaCornerChin * 55); // رفع المضروب لـ 55 ليصبح العبوس قوياً وظاهراً
   }
 
-  // حماية (Anti-Stacking) لحماية المودل من التشوه عند فتح الفم
-  const safeJoy = joy * (1 - (mouthA * 0.4)); 
-  const safeSorrow = sorrow * (1 - (mouthA * 0.6));
-  const safePucker = pucker * (1 - (mouthA * 0.8));
+  // حماية الأسطح المشتركة بالاعتماد على القيم المفصولة الجديدة
+  const safeJoy = joy * (1 - (safeMouthA * 0.4)); 
+  const safeSad = sad * (1 - (safeMouthA * 0.5));
+
+  // حساب الوضع الطبيعي (Neutral)
+  const activeExpression = Math.max(safeMouthA, safePucker, safeJoy, safeSad);
+  const neutralWeight = Math.max(0, 1 - activeExpression);
 
   return {
     yaw: finalYaw, 
@@ -142,14 +157,15 @@ export const processFaceMetrics = (landmarks, baseline = null, isCalibrating = f
     "Fcl_BRW_Surprised": browUp,
     "Fcl_BRW_Angry": browAngry, 
     
-    "Fcl_MTH_A": mouthA,
-    "Fcl_MTH_U": safePucker,    
+    "Fcl_MTH_A": safeMouthA, // الفم المفتوح الصافي (O) بعد العزل
+    "Fcl_MTH_U": safePucker, // الفم المزموم الصافي (U) بعد العزل   
     
-    // تم حذف مفاتيح Up/Down واستخدام المفاتيح الصحيحة فقط
-    "Fcl_MTH_Fun": safeJoy, 
-    "Fcl_MTH_Sorrow": safeSorrow,
+    "Fcl_MTH_Neutral": neutralWeight,       
+    "Fcl_MTH_Fun": safeJoy,                 
+    "Fcl_MTH_Angry": Math.min(1, safeSad * 0.85), // عبوس مدعوم وقوي
+    "Fcl_MTH_Sorrow": Math.min(1, safeSad * 1.2),  // حزن عميق وواضح
     
-    mouth: mouthA,
+    mouth: safeMouthA,
     blink: (blinkL + blinkR) / 2
   };
-}; // Another good
+};

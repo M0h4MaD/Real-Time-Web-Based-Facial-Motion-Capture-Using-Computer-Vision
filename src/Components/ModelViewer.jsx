@@ -62,7 +62,7 @@ function ModelViewer() {
     <>
       <ambientLight intensity={1.5} />
       <directionalLight position={[0, 5, 5]} intensity={1} />
-      <Center>
+      <Center >
         <primitive object={scene} />
       </Center>
       <OrbitControls enablePan={false} enableDamping={true} minDistance={0.5} maxDistance={4} />
