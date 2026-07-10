@@ -1,43 +1,180 @@
 /* src/Components/styles/HUD.css */
-.hud-panel {
+
+/* =========================================
+   1. الزر العلوي
+========================================= */
+.toggle-hud-top {
   position: absolute;
-  bottom: 20px; /* نزلتها للأسفل لتعطي مساحة أكبر */
-  right: 20px; /* نقلتها لليمين لتكون بعيدة عن الكاميرا */
-  width: 200px; /* كبرنا العرض */
-  background: rgba(0, 0, 0, 0.7); /* غمقنا الخلفية قليلاً لتباين أفضل */
-  backdrop-filter: blur(15px); /* بلور أقوى */
+  top: 15px;
+  right: 15px;
+  background: rgba(10, 10, 10, 0.7);
+  color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  padding: 25px 25px 25px 25px;
-  color: white;
-  font-family: "Segoe UI", sans-serif;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  z-index: 100;
+  padding: 8px 16px;
+  font-size: 0.9rem; /* تكبير الخط */
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 1000;
+  transition: 0.2s ease;
+}
+.toggle-hud-top:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.panel-title {
-    margin-top: 0;
-  margin-bottom: 15px;
-  text-align: center;
+/* =========================================
+   2. الشريط العائم (Floating Navbar)
+========================================= */
+.floating-navbar {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  
+  display: flex;
+  align-items: center;
+  gap: 20px; /* زيادة المسافة قليلاً لتناسب الخط الأكبر */
+  
+  background: rgba(15, 15, 15, 0.85); 
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  
+  /* تكبير الحشوة بشكل بسيط جداً لتستوعب الخط الجديد */
+  padding: 10px 28px; 
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  
+  z-index: 1000;
+  width: max-content;
+}
+
+.metrics-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-divider {
+  width: 1px;
+  height: 24px; /* تطويل الخط الفاصل قليلاً ليناسب الحجم الجديد */
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 5px;
+}
+
+.actions-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================================
+   3. الأزرار (تم توحيد شكل Landmarks و Calibrate)
+========================================= */
+/* الكلاس المشترك لكلا الزرين ليصبحا بنفس الشكل */
+.nav-btn, .calibrate-btn {
+  background: transparent;
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* إطار شفاف موحد */
+  padding: 6px 16px; /* تكبير مساحة الزر الداخلية */
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 0.85rem; /* تكبير خط الأزرار */
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* تأثير التمرير لزر Landmarks */
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* تأثير التمرير لزر Calibrate (لمسة بنفسجية لتمييزه) */
+.calibrate-btn:hover {
+  background: rgba(147, 51, 234, 0.15); /* لون بنفسجي شفاف عند الهوفر فقط */
+  border-color: rgba(147, 51, 234, 0.5);
+  color: #fff;
+}
+
+/* =========================================
+   4. تنسيقات MetricBar (العدادات)
+========================================= */
+.metric-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 100px;
   background: transparent !important;
 }
 
-.action-zone {
-  background: transparent;
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent !important;
 }
 
-.btn-small {
+.metric-label {
+  color: #94a3b8;
+  font-size: 0.85rem; /* تكبير خط النصوص */
+  font-weight: 500;
+  background: transparent !important;
+  white-space: nowrap;
+}
+
+.metric-value {
+  color: #a855f7;
+  font-size: 0.85rem; /* تكبير خط النسبة المئوية */
+  font-weight: 700;
+  background: transparent !important;
+}
+
+.metric-track {
   width: 100%;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
+  height: 4px; /* زيادة سماكة البار قليلاً ليناسب الخط الأكبر */
+  background: rgba(255, 255, 255, 0.1); 
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-.btn-small:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.4);
+.metric-fill {
+  height: 100%;
+  background: #9333ea;
+  border-radius: 4px;
+  transition: width 0.1s ease-out;
+}
+
+/* أضف هذه الأسطر في نهاية ملف HUD.css لديك */
+
+/* تأثير زر المرآة عند التفعيل */
+.nav-btn.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-color: #fff;
+}
+
+/* تنسيق زر التسجيل */
+.record-btn {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.5);
+  transition: all 0.3s ease;
+}
+
+.record-btn:hover {
+  background-color: rgba(248, 113, 113, 0.1);
+  color: #ef4444;
+}
+
+/* تأثير الوميض (Pulse) أثناء التسجيل */
+.record-btn.recording {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: #ef4444;
+  animation: pulse-record 1.5s infinite;
+}
+
+@keyframes pulse-record {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }

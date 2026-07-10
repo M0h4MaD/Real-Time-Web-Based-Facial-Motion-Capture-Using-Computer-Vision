@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { processFaceMetrics } from './FaceCalculations';
+import { create } from "zustand";
+import { processFaceMetrics } from "./FaceCalculations";
 
 export const useTrackingStore = create((set) => ({
   isTracking: false,
@@ -18,16 +18,16 @@ export const useFaceStore = create((set, get) => ({
     if (!newLandmarks || newLandmarks.length === 0) return;
 
     const { calibrationBaseline, isCalibrating } = get();
-    
+
     const newMetrics = processFaceMetrics(
       newLandmarks,
       calibrationBaseline,
       isCalibrating,
       (baselineData) => {
         set({ calibrationBaseline: baselineData, isCalibrating: false });
-      }
+      },
     );
-    
+
     if (newMetrics) {
       set({ landmarks: newLandmarks, metrics: newMetrics });
     } else {
@@ -40,5 +40,17 @@ export const useUIStore = create((set) => ({
   isHUDVisible: true,
   toggleHUD: () => set((state) => ({ isHUDVisible: !state.isHUDVisible })),
   showLandmarks: false,
-  toggleLandmarks: () => set((state) => ({ showLandmarks: !state.showLandmarks })),
+  toggleLandmarks: () =>
+    set((state) => ({ showLandmarks: !state.showLandmarks })),
+
+  // أضف هذه المتغيرات والدوال داخل useUIStore
+  isMirrored: false,
+  toggleMirror: () => set((state) => ({ isMirrored: !state.isMirrored })),
+
+  isRecording: false,
+  setIsRecording: (status) => set({ isRecording: status }),
+
+  // أضف هذه المتغيرات والدوال داخل useUIStore بجانب isMirrored
+  isGreenScreen: false,
+  toggleGreenScreen: () => set((state) => ({ isGreenScreen: !state.isGreenScreen })),
 }));

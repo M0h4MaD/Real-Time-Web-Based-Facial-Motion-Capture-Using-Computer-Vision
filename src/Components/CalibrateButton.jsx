@@ -17,7 +17,7 @@ export default function CalibrateButton() {
           backgroundColor: isCalibrating ? '#f59e0b' : '#4f46e5', transition: 'all 0.2s'
         }}
       >
-        {isCalibrating ? 'جاري لقط ملامح الوجه...' : 'اضبط المعايرة (Calibrate)'}
+        {isCalibrating ? 'جاري لقط ملامح الوجه...' : 'Calibrate'}
       </button>
       {hasBaseline && !isCalibrating && (
         <span style={{ fontSize: '13px', color: '#10b981', fontWeight: 'bold' }}>✓ تم قفل الأبعاد بنجاح</span>
