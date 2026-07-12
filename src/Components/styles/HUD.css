@@ -1,180 +1,196 @@
 /* src/Components/styles/HUD.css */
 
-/* =========================================
-   1. الزر العلوي
-========================================= */
-.toggle-hud-top {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: rgba(10, 10, 10, 0.7);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 8px 16px;
-  font-size: 0.9rem; /* تكبير الخط */
-  border-radius: 8px;
-  cursor: pointer;
-  z-index: 1000;
-  transition: 0.2s ease;
-}
-.toggle-hud-top:hover {
-  background: rgba(255, 255, 255, 0.1);
+/* اللوحة الجانبية الأساسية - تم تنحيفها لأقصى درجة مناسبة */
+.side-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 230px; /* 🔥 عرض نحيف جداً وأنيق يشبه برامج الـ 3D */
+  height: 100vh;
+  background: rgba(20, 20, 22, 0.95);
+  backdrop-filter: blur(10px);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.5);
+  z-index: 9000;
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* =========================================
-   2. الشريط العائم (Floating Navbar)
-========================================= */
-.floating-navbar {
+.side-panel.closed {
+  transform: translateX(100%);
+}
+
+.side-panel.open {
+  transform: translateX(0);
+}
+
+/* زر السهم الملتصق بحافة اللوحة الجانبية */
+.toggle-arrow {
   position: absolute;
-  bottom: 25px;
-  left: 50%;
-  transform: translateX(-50%);
-  
+  top: 50%;
+  left: -35px;
+  transform: translateY(-50%);
+  width: 35px;
+  height: 60px;
+  background: rgba(20, 20, 22, 0.95);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 20px; /* زيادة المسافة قليلاً لتناسب الخط الأكبر */
-  
-  background: rgba(15, 15, 15, 0.85); 
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  
-  /* تكبير الحشوة بشكل بسيط جداً لتستوعب الخط الجديد */
-  padding: 10px 28px; 
-  border-radius: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  
-  z-index: 1000;
-  width: max-content;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: -5px 0 10px rgba(0, 0, 0, 0.3);
 }
 
+.toggle-arrow:hover {
+  background: #2a2a2f;
+}
+
+/* محتوى اللوحة الداخلي */
+.panel-content {
+  padding: 20px 15px;
+  overflow-y: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  box-sizing: border-box;
+}
+
+.panel-title {
+  color: #ffffff !important;
+  margin: 0 0 5px 0;
+  font-size: 1rem;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* مجموعة العدادات */
 .metrics-group {
   display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.nav-divider {
-  width: 1px;
-  height: 24px; /* تطويل الخط الفاصل قليلاً ليناسب الحجم الجديد */
-  background: rgba(255, 255, 255, 0.15);
-  margin: 0 5px;
-}
-
-.actions-group {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* =========================================
-   3. الأزرار (تم توحيد شكل Landmarks و Calibrate)
-========================================= */
-/* الكلاس المشترك لكلا الزرين ليصبحا بنفس الشكل */
-.nav-btn, .calibrate-btn {
-  background: transparent;
-  color: #cbd5e1;
-  border: 1px solid rgba(255, 255, 255, 0.2); /* إطار شفاف موحد */
-  padding: 6px 16px; /* تكبير مساحة الزر الداخلية */
-  border-radius: 25px;
-  cursor: pointer;
-  font-size: 0.85rem; /* تكبير خط الأزرار */
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-/* تأثير التمرير لزر Landmarks */
-.nav-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-}
-
-/* تأثير التمرير لزر Calibrate (لمسة بنفسجية لتمييزه) */
-.calibrate-btn:hover {
-  background: rgba(147, 51, 234, 0.15); /* لون بنفسجي شفاف عند الهوفر فقط */
-  border-color: rgba(147, 51, 234, 0.5);
-  color: #fff;
-}
-
-/* =========================================
-   4. تنسيقات MetricBar (العدادات)
-========================================= */
+/* --- تنسيقات الـ MetricBar الكاملة والمصلحة داخل القائمة الجديدة --- */
 .metric-container {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  min-width: 100px;
-  background: transparent !important;
+  gap: 6px;
+  width: 100%;
 }
 
 .metric-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: transparent !important;
+  width: 100%;
 }
 
 .metric-label {
-  color: #94a3b8;
-  font-size: 0.85rem; /* تكبير خط النصوص */
+  color: #e2e8f0 !important; /* 🔥 لون أبيض رمادي واضح جداً فوق الخلفية الغامقة */
+  font-size: 0.75rem;
   font-weight: 500;
-  background: transparent !important;
   white-space: nowrap;
 }
 
 .metric-value {
-  color: #a855f7;
-  font-size: 0.85rem; /* تكبير خط النسبة المئوية */
+  color: #c084fc !important; /* 🔥 بنفسجي فاتح ومضيء يظهر بوضوح */
+  font-size: 0.75rem;
   font-weight: 700;
-  background: transparent !important;
 }
 
 .metric-track {
   width: 100%;
-  height: 4px; /* زيادة سماكة البار قليلاً ليناسب الخط الأكبر */
-  background: rgba(255, 255, 255, 0.1); 
-  border-radius: 4px;
+  height: 5px; /* 🔥 تم تسميك الخط قليلاً ليصبح مرئياً */
+  background: rgba(255, 255, 255, 0.15); /* خلفية رمادية فاتحة وواضحة للبار الأساسي */
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .metric-fill {
   height: 100%;
-  background: #9333ea;
-  border-radius: 4px;
+  background: #a855f7; /* البار الممتلئ بنفسجي ممتاز */
+  border-radius: 3px;
   transition: width 0.1s ease-out;
 }
 
-/* أضف هذه الأسطر في نهاية ملف HUD.css لديك */
+/* الأزرار وباقي عناصر التحكم */
+.actions-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
-/* تأثير زر المرآة عند التفعيل */
+.nav-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 2px 0;
+}
+
+.nav-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  background: #2a2a2f;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+  background: #3a3a40;
+}
+
 .nav-btn.active {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  border-color: #fff;
+  background: #4ade80;
+  color: #000 !important;
+  font-weight: bold;
 }
 
-/* تنسيق زر التسجيل */
+.load-btn {
+  background: #8b5cf6;
+  border: none;
+}
+.load-btn:hover {
+  background: #7c3aed;
+}
+
+.record-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.record-select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #374151;
+  color: white;
+  outline: none;
+  font-size: 13px;
+}
+
 .record-btn {
-  color: #f87171;
-  border-color: rgba(248, 113, 113, 0.5);
-  transition: all 0.3s ease;
-}
-
-.record-btn:hover {
-  background-color: rgba(248, 113, 113, 0.1);
-  color: #ef4444;
-}
-
-/* تأثير الوميض (Pulse) أثناء التسجيل */
-.record-btn.recording {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-  border-color: #ef4444;
-  animation: pulse-record 1.5s infinite;
-}
-
-@keyframes pulse-record {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  background: #ef4444;
+  font-weight: bold;
 }

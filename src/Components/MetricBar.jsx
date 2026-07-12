@@ -7,18 +7,16 @@ export default function MetricBar({ label, value }) {
   const isRotation = label.toLowerCase().includes("yaw");
 
   // 3. تحويل القيمة للرقم الذي سيظهر للمستخدم
-  // الدوران: من راديان إلى درجات | الفم والعيون: من 0-1 إلى 0-100
   const displayValue = isRotation 
     ? Math.round(safeValue * (180 / Math.PI)) 
     : Math.round(safeValue * 100);
 
-  // 4. حساب نسبة امتلاء شريط التقدم (يجب أن يكون دائماً بين 0 و 100)
-  // الدوران: نأخذ القيمة المطلقة (اليمين واليسار يعبئان الشريط) بحد أقصى 90 درجة
+  // 4. حساب نسبة امتلاء شريط التقدم بحد أقصى 90 درجة للدوران
   const progressWidth = isRotation
     ? Math.min((Math.abs(displayValue) / 90) * 100, 100)
     : Math.min(Math.max(displayValue, 0), 100);
 
-  // 5. تجهيز النص النهائي مع الرمز المناسب
+  // 5. تجهيز النص النهائي
   const formattedText = isRotation ? `${displayValue}°` : `${displayValue}%`;
 
   return (

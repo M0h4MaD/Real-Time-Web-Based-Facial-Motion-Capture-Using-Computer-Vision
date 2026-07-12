@@ -39,9 +39,10 @@ export const useFaceStore = create((set, get) => ({
 export const useUIStore = create((set) => ({
   isHUDVisible: true,
   toggleHUD: () => set((state) => ({ isHUDVisible: !state.isHUDVisible })),
-  showLandmarks: false,
-  toggleLandmarks: () =>
-    set((state) => ({ showLandmarks: !state.showLandmarks })),
+
+landmarkMode: 'off', // 'off', 'all', 'wireframe', 'points', 'mouth', 'eyes', 'cyberpunk'
+  setLandmarkMode: (mode) => set({ landmarkMode: mode }),
+
 
   // أضف هذه المتغيرات والدوال داخل useUIStore
   isMirrored: false,
@@ -53,4 +54,7 @@ export const useUIStore = create((set) => ({
   // أضف هذه المتغيرات والدوال داخل useUIStore بجانب isMirrored
   isGreenScreen: false,
   toggleGreenScreen: () => set((state) => ({ isGreenScreen: !state.isGreenScreen })),
+
+  modelUrl: "/Adam.glb",
+  setModelUrl: (url) => set({ modelUrl: url }),
 }));

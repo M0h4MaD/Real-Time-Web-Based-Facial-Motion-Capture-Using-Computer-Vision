@@ -1,35 +1,86 @@
+/* src/Components/styles/TrackingOverlay.css */
+
 .floating-container {
   position: fixed;
   bottom: 20px;
   left: 20px;
-  z-index: 100;
+  z-index: 10000;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 .toggle-btn {
   padding: 8px 16px;
   border-radius: 20px;
   margin-bottom: 10px;
-  background: #333;
+  background: #2a2a2f;
   color: #fff;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
 }
 
-.video-wrapper {
-  position: relative;
-  width: 320px;
-  height: 240px;
+.toggle-btn:hover {
+  background: #3a3a40;
+}
+
+/* تنسيق النافذة العائمة الخاصة بـ react-rnd */
+.draggable-video-window {
   border-radius: 12px;
   overflow: hidden;
-  border: 2px solid #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   background: #000;
-  /* أضف هذه لضمان أن كل ما بداخلها يلتزم بالمساحة */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  
+  /* 🔥 هذه الأسطر تجبر المتصفح على استخدام كرت الشاشة وتسريع الأداء */
+  will-change: transform, width, height; 
+  transform: translateZ(0); 
+  backface-visibility: hidden;
+}
+
+/* 🔥 تصميم شريط السحب الأنيق (مثل الآيباد/الماك) */
+.drag-handle {
+  width: 100%;
+  height: 24px; /* مساحة مريحة للسحب */
+  background: #1a1a1c;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: grab;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* الخط الصغير في منتصف شريط السحب */
+.drag-icon {
+  width: 35px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.drag-handle:hover .drag-icon {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* تغليف الفيديو */
+.video-wrapper {
+  position: relative;
+  width: 100%; 
+  height: calc(100% - 24px); /* خصم مساحة شريط السحب */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
 }
 
 .video {
@@ -39,7 +90,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  z-index: 1; /* الفيديو في الطبقة الأدنى */
+  z-index: 1;
+  pointer-events: none; /* لمنع أي تفاعل يعطل الأداء */
 }
 
 .landmarks-canvas {
@@ -48,7 +100,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 2; /* النقاط في الطبقة الأعلى */
+  z-index: 2;
   pointer-events: none;
-  background-color: transparent !important; /* التأكيد على الشفافية */
+  background-color: transparent !important;
 }
