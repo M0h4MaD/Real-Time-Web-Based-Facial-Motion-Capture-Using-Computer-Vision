@@ -194,3 +194,124 @@
   background: #ef4444;
   font-weight: bold;
 }
+
+/* --- HUD Stats Styles --- */
+.hud-stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(0, 255, 204, 0.05);
+  border: 1px solid rgba(0, 255, 204, 0.2);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  color: #00ffcc;
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stats-value.status-good { color: #00ffcc; text-shadow: 0 0 5px rgba(0, 255, 204, 0.5); }
+.stats-value.status-warn { color: #ffcc00; text-shadow: 0 0 5px rgba(255, 204, 0, 0.5); }
+.stats-value.status-danger { color: #ff4444; text-shadow: 0 0 5px rgba(255, 68, 68, 0.5); }
+
+
+/* --- Model Inspector Styles --- */
+.model-inspector-container {
+  margin-top: 15px;
+}
+
+.inspector-btn {
+  width: 100%;
+  padding: 8px;
+  background: rgba(0, 153, 255, 0.1);
+  border: 1px solid rgba(0, 153, 255, 0.3);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.inspector-btn:hover {
+  background: rgba(0, 153, 255, 0.2);
+}
+
+.inspector-content {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 5px;
+  max-height: 250px;
+  overflow-y: auto;
+  font-size: 11px;
+  font-family: monospace;
+  border: 1px solid rgba(0, 153, 255, 0.1);
+}
+
+.inspector-empty {
+  color: #ff4444;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.inspector-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 3px;
+}
+
+.inspector-item-name {
+  color: #ccc;
+}
+
+.inspector-item-status {
+  color: #00ffcc;
+  font-size: 10px;
+}
+
+
+/* --- Utilities --- */
+.error-toast-fixed {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  z-index: 10000;
+  font-weight: bold;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid #f87171;
+  animation: slideDown 0.3s ease-out;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.landmark-select {
+  text-align: center;
+  appearance: none;
+}
+
+@keyframes slideDown {
+  from { top: -50px; opacity: 0; }
+  to { top: 20px; opacity: 1; }
+}

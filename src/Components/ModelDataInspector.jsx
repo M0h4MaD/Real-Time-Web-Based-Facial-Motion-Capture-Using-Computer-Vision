@@ -1,0 +1,37 @@
+// src/Components/ModelDataInspector.jsx
+import { useState } from "react";
+import { useUIStore } from "../lib/globalStates.js";
+
+export default function ModelDataInspector() {
+  const { modelBlendshapes } = useUIStore();
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="model-inspector-container">
+      <button 
+        className="inspector-btn"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>📦 Model Blendshapes ({modelBlendshapes.length})</span>
+        <span>{isOpen ? "▼" : "▶"}</span>
+      </button>
+
+      {isOpen && (
+        <div className="inspector-content">
+          {modelBlendshapes.length === 0 ? (
+            <div className="inspector-empty">
+              لا يوجد Blendshapes في هذا المجسم!
+            </div>
+          ) : (
+            modelBlendshapes.map((shapeName, index) => (
+              <div key={index} className="inspector-item">
+                <span className="inspector-item-name">{index + 1}. {shapeName}</span>
+                <span className="inspector-item-status">READY</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

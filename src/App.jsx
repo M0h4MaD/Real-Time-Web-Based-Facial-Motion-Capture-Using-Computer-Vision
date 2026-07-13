@@ -18,7 +18,7 @@ export default function App() {
           </Stage>
         </Canvas>
 
-        {/* المكون الذي يحتوي على الأزرار والـ HUD */}
+        {/* HUD component that displays UI */}
         <HUD />
       </main>
 

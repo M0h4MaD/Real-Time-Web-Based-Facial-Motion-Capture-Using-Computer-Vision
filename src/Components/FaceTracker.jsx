@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { useFaceStore } from "../lib/globalStates";
 
-export default function FaceTracker({ videoRef, isActive }) {
+// 🔥 أضفنا isPaused هنا
+export default function FaceTracker({ videoRef, isActive, isPaused }) {
   const { setLandmarks } = useFaceStore((state) => state);
 
   useEffect(() => {
@@ -30,6 +31,13 @@ export default function FaceTracker({ videoRef, isActive }) {
 
     function predict() {
       if (!isActive) return;
+      
+      // 🔥 التخطي إذا كانت النافذة تتحرك لإنقاذ الأداء
+      if (isPaused) {
+        animationFrameId = setTimeout(predict, 60);
+        return;
+      }
+
       const video = videoRef.current;
       if (video && video.readyState === 4) {
         const results = landmarker.detectForVideo(video, performance.now());
@@ -43,6 +51,6 @@ export default function FaceTracker({ videoRef, isActive }) {
       clearTimeout(animationFrameId);
       if (videoRef.current?.srcObject) videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
     };
-  }, [isActive, videoRef, setLandmarks]);
+  }, [isActive, videoRef, setLandmarks, isPaused]); // أضفنا isPaused للمصفوفة
   return null;
 }
