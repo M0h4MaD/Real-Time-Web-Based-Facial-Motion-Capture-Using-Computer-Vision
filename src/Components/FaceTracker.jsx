@@ -1,24 +1,31 @@
-import { useEffect } from "react";
+// src/Components/FaceTracker.jsx
+import { useEffect, useRef } from "react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { useFaceStore } from "../lib/globalStates";
 
-// 🔥 أضفنا isPaused هنا
 export default function FaceTracker({ videoRef, isActive, isPaused }) {
-  const { setLandmarks } = useFaceStore((state) => state);
+  // ⚡ استدعاء الدالة فقط لمنع المكون من إعادة التصيير عند كل حركة وجه
+  const setLandmarks = useFaceStore((state) => state.setLandmarks);
+  const animationFrameRef = useRef(null);
 
   useEffect(() => {
     if (!isActive) return;
-    let landmarker; let animationFrameId;
+    let landmarker;
 
     async function init() {
       try {
         const vision = await FilesetResolver.forVisionTasks("/wasm");
         landmarker = await FaceLandmarker.createFromOptions(vision, {
-          baseOptions: { modelAssetPath: `/face_landmarker.task`, delegate: "GPU" },
+          baseOptions: {
+            modelAssetPath: `/face_landmarker.task`,
+            delegate: "GPU",
+          },
           runningMode: "VIDEO",
         });
 
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480 },
+        });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = async () => {
@@ -26,31 +33,38 @@ export default function FaceTracker({ videoRef, isActive, isPaused }) {
             predict();
           };
         }
-      } catch (err) { console.error("Init Error:", err); }
+      } catch (err) {
+        console.error("Init Error:", err);
+      }
     }
 
     function predict() {
       if (!isActive) return;
-      
-      // 🔥 التخطي إذا كانت النافذة تتحرك لإنقاذ الأداء
+
       if (isPaused) {
-        animationFrameId = setTimeout(predict, 60);
+        // ⚡ مزامنة عتادية (Hardware Sync) للحفاظ على سلاسة الإطارات
+        animationFrameRef.current = requestAnimationFrame(predict);
         return;
       }
 
       const video = videoRef.current;
       if (video && video.readyState === 4) {
         const results = landmarker.detectForVideo(video, performance.now());
-        if (results.faceLandmarks?.length > 0) setLandmarks(results.faceLandmarks[0]);
+        if (results.faceLandmarks?.length > 0)
+          setLandmarks(results.faceLandmarks[0]);
       }
-      animationFrameId = setTimeout(predict, 60);
+      animationFrameRef.current = requestAnimationFrame(predict);
     }
+
     init();
 
     return () => {
-      clearTimeout(animationFrameId);
-      if (videoRef.current?.srcObject) videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+      if (animationFrameRef.current)
+        cancelAnimationFrame(animationFrameRef.current);
+      if (videoRef.current?.srcObject)
+        videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
     };
-  }, [isActive, videoRef, setLandmarks, isPaused]); // أضفنا isPaused للمصفوفة
+  }, [isActive, videoRef, setLandmarks, isPaused]);
+
   return null;
 }

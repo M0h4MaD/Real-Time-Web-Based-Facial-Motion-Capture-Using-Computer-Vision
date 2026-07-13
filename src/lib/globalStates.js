@@ -1,8 +1,47 @@
 import { create } from "zustand";
 import { processFaceMetrics } from "./FaceCalculations";
 
+// 🧠 نظام فلترة ذكي لمنع تداخل المحاور (Cross-talk) وتنعيم الحركة
+let prevPitch = 0;
+let prevYaw = 0;
+let prevRoll = 0;
 
+const applySmartFilter = (rawMetrics) => {
+  if (!rawMetrics) return rawMetrics;
 
+  const smoothFactor = 0.5; // (0.1 بطيء جداً وناعم - 0.9 سريع جداً وحاد)
+
+  // ⚡ السر هنا: إذا كان دوران الرأس (Yaw) كبيراً، نقوم بتخدير استجابة الـ Pitch
+  let pitchDamping = 1.0;
+  if (rawMetrics.yaw !== undefined && Math.abs(rawMetrics.yaw) > 0.25) {
+    pitchDamping = 0.15; // تخفيف حساسية الرفع والتنزيل أثناء الالتفاف
+  }
+
+  // نستخدم القيم الحالية أو القيم السابقة لتجنب ظهور NaN في حال عدم توفر قيمة من الحسابات
+  const currentPitch =
+    rawMetrics.pitch !== undefined ? rawMetrics.pitch : prevPitch;
+  const currentYaw = rawMetrics.yaw !== undefined ? rawMetrics.yaw : prevYaw;
+  const currentRoll =
+    rawMetrics.roll !== undefined ? rawMetrics.roll : prevRoll;
+
+  // تطبيق معادلة الـ EMA
+  const finalPitch =
+    prevPitch + (currentPitch - prevPitch) * (smoothFactor * pitchDamping);
+  const finalYaw = prevYaw + (currentYaw - prevYaw) * smoothFactor;
+  const finalRoll = prevRoll + (currentRoll - prevRoll) * smoothFactor;
+
+  // حفظ القيم للإطار القادم
+  prevPitch = finalPitch;
+  prevYaw = finalYaw;
+  prevRoll = finalRoll;
+
+  return {
+    ...rawMetrics,
+    pitch: finalPitch,
+    yaw: finalYaw,
+    roll: finalRoll,
+  };
+};
 
 // Tracking Global state store
 export const useTrackingStore = create((set) => ({
@@ -33,7 +72,9 @@ export const useFaceStore = create((set, get) => ({
     );
 
     if (newMetrics) {
-      set({ landmarks: newLandmarks, metrics: newMetrics });
+      // ⚡ تمرير البيانات عبر الفلتر الذكي قبل اعتمادها في حالة التطبيق
+      const filteredMetrics = applySmartFilter(newMetrics);
+      set({ landmarks: newLandmarks, metrics: filteredMetrics });
     } else {
       set({ landmarks: newLandmarks });
     }
@@ -69,5 +110,4 @@ export const useUIStore = create((set) => ({
 
   modelBlendshapes: [],
   setModelBlendshapes: (shapes) => set({ modelBlendshapes: shapes }),
-
 }));
