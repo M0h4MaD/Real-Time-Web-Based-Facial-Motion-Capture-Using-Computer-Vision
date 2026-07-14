@@ -37,7 +37,8 @@ const CONFIG = {
   SAD_THRESHOLD: -0.002
 };
 
-const get3DDist = (p1, p2) => Math.hypot((p1.x - p2.x), (p1.y - p2.y), (p1.z - p2.z));
+// const get3DDist = (p1, p2) => Math.hypot((p1.x - p2.x), (p1.y - p2.y), (p1.z - p2.z));
+const get3DDist = (p1, p2) => Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2 + (p1.z - p2.z)**2);
 
 const calculateEAR = (landmarks, indices) => {
   const v1 = get3DDist(landmarks[indices[1]], landmarks[indices[5]]);

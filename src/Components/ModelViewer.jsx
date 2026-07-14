@@ -14,40 +14,80 @@ const IGNORED_SHAPES = ["yaw", "pitch", "roll", "mouth", "blink"];
 function ModelViewer() {
   const modelUrl = useUIStore((state) => state.modelUrl);
   const setAppError = useUIStore((state) => state.setAppError);
+  const setAppSuccess = useUIStore((state) => state.setAppSuccess);
   const setModelBlendshapes = useUIStore((state) => state.setModelBlendshapes);
-  const isMirrored = useUIStore((state) => state.isMirrored);
-  const isGreenScreen = useUIStore((state) => state.isGreenScreen);
-
-  // ⚡ تم الحذف: const mocapData = useFaceStore((state) => state.metrics);
 
   const { scene } = useGLTF(modelUrl);
   const { gl } = useThree();
 
   const headBoneRef = useRef(null);
   const hairBonesRef = useRef([]);
-  const morphMeshesRef = useRef([]);
   const prevHeadRot = useRef({ y: 0, x: 0 });
   const hairPhysicsState = useRef({});
+  const blendshapeTargetMapRef = useRef({});
+
+  const loadedModelRef = useRef(null);
 
   useEffect(() => {
-    if (!scene) setAppError("المجسم غير موجود أو فشل تحميله.");
-  }, [scene, setAppError]);
+    return () => {
+      if (modelUrl) {
+        useGLTF.clear(modelUrl);
+      }
+    };
+  }, [modelUrl]);
+
+  // التحكم بلون الشاشة الخضراء ودقة الريندر خلف الكواليس
+  useEffect(() => {
+    const initialGreenScreen = useUIStore.getState().isGreenScreen;
+    const initialLowEnd = useUIStore.getState().isLowEndMode;
+
+    gl.setClearColor(
+      initialGreenScreen ? "#00FF00" : "#000000",
+      initialGreenScreen ? 1 : 0,
+    );
+    gl.setPixelRatio(
+      initialLowEnd ? 0.7 : Math.min(window.devicePixelRatio, 2),
+    );
+
+    const unsubscribe = useUIStore.subscribe((state, prevState) => {
+      if (state.isGreenScreen !== prevState?.isGreenScreen) {
+        gl.setClearColor(
+          state.isGreenScreen ? "#00FF00" : "#000000",
+          state.isGreenScreen ? 1 : 0,
+        );
+      }
+      if (state.isLowEndMode !== prevState?.isLowEndMode) {
+        gl.setPixelRatio(
+          state.isLowEndMode ? 0.7 : Math.min(window.devicePixelRatio, 2),
+        );
+      }
+    });
+
+    return () => unsubscribe();
+  }, [gl]);
 
   useEffect(() => {
-    if (isGreenScreen) gl.setClearColor("#00FF00", 1);
-    else gl.setClearColor("#000000", 0);
-  }, [isGreenScreen, gl]);
+    if (!scene) {
+      setAppError("المجسم غير موجود أو فشل تحميله.");
+      return;
+    }
 
-  useEffect(() => {
-    if (!scene) return;
+    if (modelUrl !== "/Adam.glb" && loadedModelRef.current !== modelUrl) {
+      setAppSuccess("تم تحميل ومعالجة المجسم الجديد بنجاح! 📦✨");
+      loadedModelRef.current = modelUrl;
+    }
+
     let head = null;
     const hairs = [];
-    const morphMeshes = [];
     const allAvailableShapes = new Set();
+    const targetMap = {};
 
     try {
       scene.traverse((child) => {
-        if (child.isMesh || child.isSkinnedMesh) child.frustumCulled = false;
+        if (child.isMesh || child.isSkinnedMesh) {
+          child.frustumCulled = false;
+        }
+
         if (child.isBone) {
           const name = child.name.toLowerCase();
           if (name.includes("head") && !name.includes("nub")) head = child;
@@ -55,47 +95,74 @@ function ModelViewer() {
             hairs.push(child);
             if (!child.userData.initRot)
               child.userData.initRot = child.rotation.clone();
-            if (!hairPhysicsState.current[child.name])
+            if (!hairPhysicsState.current[child.name]) {
               hairPhysicsState.current[child.name] = {
                 offsetX: 0,
                 velocityX: 0,
                 offsetZ: 0,
                 velocityZ: 0,
               };
+            }
           }
         }
+
         if (child.isSkinnedMesh && child.morphTargetDictionary) {
-          morphMeshes.push(child);
-          Object.keys(child.morphTargetDictionary).forEach((shape) =>
-            allAvailableShapes.add(shape),
+          Object.entries(child.morphTargetDictionary).forEach(
+            ([shapeName, index]) => {
+              allAvailableShapes.add(shapeName);
+              if (!targetMap[shapeName]) targetMap[shapeName] = [];
+              targetMap[shapeName].push({ mesh: child, index: index });
+            },
           );
         }
       });
+
       setModelBlendshapes(Array.from(allAvailableShapes).sort());
       headBoneRef.current = head;
       hairBonesRef.current = hairs;
-      morphMeshesRef.current = morphMeshes;
+      blendshapeTargetMapRef.current = targetMap;
     } catch (error) {
-      setAppError("حدث خطأ أثناء قراءة المجسم وتجهيز العظام.");
+      setAppError("حدث خطأ أثناء معالجة بنية الهيكل.");
     }
-  }, [scene, setAppError, setModelBlendshapes]);
+
+    return () => {
+      blendshapeTargetMapRef.current = {};
+      headBoneRef.current = null;
+      hairBonesRef.current = [];
+
+      if (scene) {
+        scene.traverse((object) => {
+          if (object.isMesh) {
+            if (object.geometry) object.geometry.dispose();
+            if (object.material) {
+              if (Array.isArray(object.material))
+                object.material.forEach((mat) => mat.dispose());
+              else object.material.dispose();
+            }
+          }
+        });
+      }
+    };
+  }, [scene, setAppError, setAppSuccess, setModelBlendshapes, modelUrl]);
 
   useFrame(() => {
-    // ⚡ التحديث الصامت: يقرأ البيانات مباشرة من الذاكرة دون إجهاد المعالج
     const mocapData = useFaceStore.getState().metrics;
-
     if (!mocapData || !scene) return;
+
     if (typeof recordCurrentFrame === "function") recordCurrentFrame(mocapData);
 
     const headBone = headBoneRef.current;
     if (headBone) {
-      const targetYaw = isMirrored ? -mocapData.yaw : mocapData.yaw;
-      const targetRoll = isMirrored ? -mocapData.roll : mocapData.roll;
+      const isMirrored = useUIStore.getState().isMirrored;
+      const isLowEnd = useUIStore.getState().isLowEndMode;
+
+      const targetY = isMirrored ? -mocapData.yaw : mocapData.yaw;
+      const targetZ = isMirrored ? -mocapData.roll : mocapData.roll;
 
       if (isValidNumber(mocapData.yaw))
         headBone.rotation.y = THREE.MathUtils.lerp(
           headBone.rotation.y,
-          targetYaw,
+          targetY,
           0.15,
         );
       if (isValidNumber(mocapData.pitch))
@@ -107,11 +174,12 @@ function ModelViewer() {
       if (isValidNumber(mocapData.roll))
         headBone.rotation.z = THREE.MathUtils.lerp(
           headBone.rotation.z,
-          targetRoll,
+          targetZ,
           0.15,
         );
 
-      if (hairBonesRef.current.length > 0) {
+      // تعطيل فيزياء الشعر لدعم الأجهزة الضعيفة
+      if (hairBonesRef.current.length > 0 && !isLowEnd) {
         calculateHairPhysics(
           headBone,
           prevHeadRot.current,
@@ -122,28 +190,31 @@ function ModelViewer() {
       }
     }
 
-    morphMeshesRef.current.forEach((child) => {
-      Object.entries(mocapData).forEach(([shapeName, targetValue]) => {
-        if (IGNORED_SHAPES.includes(shapeName)) return;
-        const index = child.morphTargetDictionary[shapeName];
-        if (
-          index !== undefined &&
-          isValidNumber(targetValue) &&
-          index < child.morphTargetInfluences.length
-        ) {
-          const isMouthShape =
-            shapeName.toLowerCase().includes("mouth") ||
-            shapeName.toLowerCase().includes("jaw");
-          const finalValue = isMouthShape
-            ? Math.min(targetValue * 1.5, 1)
-            : targetValue;
-          child.morphTargetInfluences[index] = THREE.MathUtils.lerp(
-            child.morphTargetInfluences[index],
-            finalValue,
-            isMouthShape ? 0.45 : 0.2,
-          );
+    Object.entries(mocapData).forEach(([shapeName, targetValue]) => {
+      if (IGNORED_SHAPES.includes(shapeName) || !isValidNumber(targetValue))
+        return;
+
+      const targets = blendshapeTargetMapRef.current[shapeName];
+      if (!targets) return;
+
+      const isMouthShape =
+        shapeName.toLowerCase().includes("mouth") ||
+        shapeName.toLowerCase().includes("jaw");
+      const finalValue = isMouthShape
+        ? Math.min(targetValue * 1.5, 1)
+        : targetValue;
+      const lerpFactor = isMouthShape ? 0.45 : 0.2;
+
+      for (let i = 0; i < targets.length; i++) {
+        const target = targets[i];
+        const currentValue = target.mesh.morphTargetInfluences[target.index];
+
+        // ⚡ Epsilon Culling: منع الحسابات العبثية إذا لم يتغير التعبير
+        if (Math.abs(currentValue - finalValue) > 0.001) {
+          target.mesh.morphTargetInfluences[target.index] =
+            THREE.MathUtils.lerp(currentValue, finalValue, lerpFactor);
         }
-      });
+      }
     });
   });
 

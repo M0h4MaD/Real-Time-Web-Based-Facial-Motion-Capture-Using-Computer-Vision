@@ -1,11 +1,10 @@
 // src/Components/LandmarksOverlay.jsx
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import { useFaceStore, useUIStore } from "../lib/globalStates";
 
-// ⚡ نقل المصفوفات خارج المكون لكي تحجز في الذاكرة مرة واحدة فقط
 const mouthIndices = [61, 291, 0, 17, 13, 14];
 const eyesIndices = [159, 145, 33, 133, 386, 374, 263, 362];
-const redIndices = [
+const redIndices = new Set([
   4,
   70,
   52,
@@ -17,7 +16,7 @@ const redIndices = [
   280,
   ...mouthIndices,
   ...eyesIndices,
-];
+]);
 const mouthConnections = [
   [61, 0],
   [0, 291],
@@ -73,64 +72,74 @@ const faceContourConnections = [
   [109, 10],
 ];
 
-export default function LandmarksOverlay() {
+const LandmarksOverlay = () => {
   const canvasRef = useRef(null);
-  const { landmarks } = useFaceStore();
-  const { landmarkMode } = useUIStore();
+  const landmarks = useFaceStore((state) => state.landmarks);
+  const landmarkMode = useUIStore((state) => state.landmarkMode);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const { pointsToDraw, connectionsToDraw } = useMemo(() => {
+    let pts = [];
+    let conns = [];
 
-    if (
-      !landmarkMode ||
-      landmarkMode === "off" ||
-      !landmarks ||
-      landmarks.length === 0
-    )
-      return;
+    if (!landmarkMode || landmarkMode === "off")
+      return { pointsToDraw: pts, connectionsToDraw: conns };
 
-    let pointsToDraw = [];
-    let connectionsToDraw = [];
+    const allIndices = Array.from({ length: 478 }, (_, i) => i);
 
     switch (landmarkMode) {
       case "all":
-        pointsToDraw = landmarks.map((_, i) => i);
-        connectionsToDraw = [...mouthConnections, ...eyesConnections];
+        pts = allIndices;
+        conns = [...mouthConnections, ...eyesConnections];
         break;
       case "wireframe":
-        connectionsToDraw = [
+        conns = [
           ...mouthConnections,
           ...eyesConnections,
           ...faceContourConnections,
         ];
         break;
       case "points":
-        pointsToDraw = landmarks.map((_, i) => i);
+        pts = allIndices;
         break;
       case "mouth":
-        pointsToDraw = mouthIndices;
-        connectionsToDraw = mouthConnections;
+        pts = mouthIndices;
+        conns = mouthConnections;
         break;
       case "eyes":
-        pointsToDraw = eyesIndices;
-        connectionsToDraw = eyesConnections;
+        pts = eyesIndices;
+        conns = eyesConnections;
         break;
       case "cyberpunk":
-        pointsToDraw = landmarks.map((_, i) => i);
-        connectionsToDraw = faceContourConnections;
+        pts = allIndices;
+        conns = faceContourConnections;
         break;
       default:
         break;
     }
+    return { pointsToDraw: pts, connectionsToDraw: conns };
+  }, [landmarkMode]);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (
+      !landmarks ||
+      landmarks.length === 0 ||
+      (pointsToDraw.length === 0 && connectionsToDraw.length === 0)
+    )
+      return;
+
+    // 1. رسم الخطوط
     if (connectionsToDraw.length > 0) {
       ctx.beginPath();
       if (landmarkMode === "cyberpunk") {
         ctx.strokeStyle = "#00FFCC";
         ctx.lineWidth = 2;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 4;
         ctx.shadowColor = "#00FFCC";
       } else {
         ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
@@ -138,57 +147,60 @@ export default function LandmarksOverlay() {
         ctx.shadowBlur = 0;
       }
 
-      connectionsToDraw.forEach(([i1, i2]) => {
-        if (!landmarks[i1] || !landmarks[i2]) return;
-        ctx.moveTo(
-          landmarks[i1].x * canvas.width,
-          landmarks[i1].y * canvas.height,
-        );
-        ctx.lineTo(
-          landmarks[i2].x * canvas.width,
-          landmarks[i2].y * canvas.height,
-        );
-      });
+      for (let i = 0; i < connectionsToDraw.length; i++) {
+        const [i1, i2] = connectionsToDraw[i];
+        if (landmarks[i1] && landmarks[i2]) {
+          ctx.moveTo(
+            landmarks[i1].x * canvas.width,
+            landmarks[i1].y * canvas.height,
+          );
+          ctx.lineTo(
+            landmarks[i2].x * canvas.width,
+            landmarks[i2].y * canvas.height,
+          );
+        }
+      }
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
 
+    // 2. رسم النقاط بنظام Batch Rendering فائق السرعة
     if (pointsToDraw.length > 0) {
-      pointsToDraw.forEach((index) => {
-        const point = landmarks[index];
-        if (!point) return;
-        const isRed = redIndices.includes(index);
+      // النقاط الأساسية (الخضراء أو السايبربانك)
+      ctx.beginPath();
+      for (let i = 0; i < pointsToDraw.length; i++) {
+        const index = pointsToDraw[i];
+        if (!redIndices.has(index) && landmarks[index]) {
+          ctx.rect(
+            landmarks[index].x * canvas.width,
+            landmarks[index].y * canvas.height,
+            1.5,
+            1.5,
+          );
+        }
+      }
+      ctx.fillStyle = landmarkMode === "cyberpunk" ? "#00FFCC" : "#00FF00";
+      ctx.fill();
 
+      // النقاط الحمراء (بأمر رسم مجمع واحد)
+      if (landmarkMode !== "cyberpunk") {
         ctx.beginPath();
-        if (landmarkMode === "cyberpunk") {
-          ctx.arc(
-            point.x * canvas.width,
-            point.y * canvas.height,
-            0.8,
-            0,
-            2 * Math.PI,
-          );
-          ctx.fillStyle = "#00FFCC";
-        } else {
-          ctx.arc(
-            point.x * canvas.width,
-            point.y * canvas.height,
-            isRed ? 3 : 1.2,
-            0,
-            2 * Math.PI,
-          );
-          ctx.fillStyle = isRed ? "#FF0000" : "#00FF00";
+        for (let i = 0; i < pointsToDraw.length; i++) {
+          const index = pointsToDraw[i];
+          if (redIndices.has(index) && landmarks[index]) {
+            ctx.rect(
+              landmarks[index].x * canvas.width,
+              landmarks[index].y * canvas.height,
+              2.5,
+              2.5,
+            );
+          }
         }
+        ctx.fillStyle = "#FF0000";
         ctx.fill();
-
-        if (isRed && landmarkMode !== "cyberpunk") {
-          ctx.strokeStyle = "#FFFFFF";
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      });
+      }
     }
-  }, [landmarks, landmarkMode]);
+  }, [landmarks, pointsToDraw, connectionsToDraw, landmarkMode]);
 
   return (
     <canvas
@@ -209,4 +221,6 @@ export default function LandmarksOverlay() {
       }}
     />
   );
-}
+};
+
+export default React.memo(LandmarksOverlay);

@@ -1,7 +1,9 @@
+// src/lib/globalStates.js
 import { create } from "zustand";
 import { processFaceMetrics } from "./FaceCalculations";
+import toast from "react-hot-toast";
 
-// 🧠 نظام فلترة ذكي لمنع تداخل المحاور (Cross-talk) وتنعيم الحركة
+// نظام فلترة ذكي لمنع تداخل المحاور (Cross-talk) وتنعيم الحركة
 let prevPitch = 0;
 let prevYaw = 0;
 let prevRoll = 0;
@@ -9,28 +11,24 @@ let prevRoll = 0;
 const applySmartFilter = (rawMetrics) => {
   if (!rawMetrics) return rawMetrics;
 
-  const smoothFactor = 0.5; // (0.1 بطيء جداً وناعم - 0.9 سريع جداً وحاد)
-
-  // ⚡ السر هنا: إذا كان دوران الرأس (Yaw) كبيراً، نقوم بتخدير استجابة الـ Pitch
+  const smoothFactor = 0.5;
   let pitchDamping = 1.0;
+
   if (rawMetrics.yaw !== undefined && Math.abs(rawMetrics.yaw) > 0.25) {
-    pitchDamping = 0.15; // تخفيف حساسية الرفع والتنزيل أثناء الالتفاف
+    pitchDamping = 0.15;
   }
 
-  // نستخدم القيم الحالية أو القيم السابقة لتجنب ظهور NaN في حال عدم توفر قيمة من الحسابات
   const currentPitch =
     rawMetrics.pitch !== undefined ? rawMetrics.pitch : prevPitch;
   const currentYaw = rawMetrics.yaw !== undefined ? rawMetrics.yaw : prevYaw;
   const currentRoll =
     rawMetrics.roll !== undefined ? rawMetrics.roll : prevRoll;
 
-  // تطبيق معادلة الـ EMA
   const finalPitch =
     prevPitch + (currentPitch - prevPitch) * (smoothFactor * pitchDamping);
   const finalYaw = prevYaw + (currentYaw - prevYaw) * smoothFactor;
   const finalRoll = prevRoll + (currentRoll - prevRoll) * smoothFactor;
 
-  // حفظ القيم للإطار القادم
   prevPitch = finalPitch;
   prevYaw = finalYaw;
   prevRoll = finalRoll;
@@ -43,13 +41,11 @@ const applySmartFilter = (rawMetrics) => {
   };
 };
 
-// Tracking Global state store
 export const useTrackingStore = create((set) => ({
   isTracking: false,
   toggleTracking: () => set((state) => ({ isTracking: !state.isTracking })),
 }));
 
-// Face Global state store
 export const useFaceStore = create((set, get) => ({
   metrics: { yaw: 0, mouth: 0, blink: 0 },
   landmarks: [],
@@ -68,11 +64,13 @@ export const useFaceStore = create((set, get) => ({
       isCalibrating,
       (baselineData) => {
         set({ calibrationBaseline: baselineData, isCalibrating: false });
+        toast.success("تمت المعايرة بنجاح", {
+          style: { background: "#333", color: "#fff" },
+        });
       },
     );
 
     if (newMetrics) {
-      // ⚡ تمرير البيانات عبر الفلتر الذكي قبل اعتمادها في حالة التطبيق
       const filteredMetrics = applySmartFilter(newMetrics);
       set({ landmarks: newLandmarks, metrics: filteredMetrics });
     } else {
@@ -81,12 +79,35 @@ export const useFaceStore = create((set, get) => ({
   },
 }));
 
-// UI Global state store
 export const useUIStore = create((set) => ({
-  appError: null,
+  // إطلاق توست الخطأ
   setAppError: (msg) => {
-    set({ appError: msg });
-    if (msg) setTimeout(() => set({ appError: null }), 5000);
+    if (msg) {
+      toast.error(msg, {
+        id: "app-error", // ⚡ هذه الإضافة تمنع تكرار توست الأخطاء
+        style: {
+          borderRadius: "8px",
+          background: "#222",
+          color: "#fff",
+          border: "1px solid #ff4b4b",
+        },
+      });
+    }
+  },
+
+  // إطلاق توست النجاح
+  setAppSuccess: (msg) => {
+    if (msg) {
+      toast.success(msg, {
+        id: "app-success", // ⚡ هذه الإضافة تمنع تكرار توست النجاح
+        style: {
+          borderRadius: "8px",
+          background: "#222",
+          color: "#fff",
+          border: "1px solid #10b981",
+        },
+      });
+    }
   },
 
   isHUDVisible: true,
@@ -106,8 +127,18 @@ export const useUIStore = create((set) => ({
     set((state) => ({ isGreenScreen: !state.isGreenScreen })),
 
   modelUrl: "/Adam.glb",
-  setModelUrl: (url) => set({ modelUrl: url }),
+  setModelUrl: (url) =>
+    set((state) => {
+      // ⚡ تنظيف الـ ObjectURL المولد من المتصفح (Blob) فوراً قبل التغيير لمنع تسرب الذاكرة العشوائية (RAM)
+      if (state.modelUrl && state.modelUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(state.modelUrl);
+      }
+      return { modelUrl: url };
+    }),
 
   modelBlendshapes: [],
   setModelBlendshapes: (shapes) => set({ modelBlendshapes: shapes }),
+
+  isLowEndMode: false,
+  toggleLowEndMode: () => set((state) => ({ isLowEndMode: !state.isLowEndMode })),
 }));

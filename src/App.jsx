@@ -6,11 +6,21 @@ import "./App.css";
 import { Canvas } from "@react-three/fiber";
 import ModelViewer from "./Components/ModelViewer.jsx";
 import { Stage } from "@react-three/drei";
+import { Toaster } from "react-hot-toast"; // ⚡ إضافة التوست
 
 // App.jsx (نظيف جداً)
 export default function App() {
   return (
     <div className="app-container">
+      {/* ⚡ نظام الإشعارات يطفو فوق كل شيء */}
+      <Toaster 
+        position="bottom-center" 
+        reverseOrder={false} 
+        toastOptions={{
+          duration: 4000,
+        }}
+      />
+
       <main className="main-content">
         <Canvas dpr={[1, 2]} shadows camera={{position:[0,0,1], fov: 45 }}>
           <Stage environment="city" intensity={0.6}>

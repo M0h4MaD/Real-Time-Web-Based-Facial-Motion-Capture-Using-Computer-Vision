@@ -16,6 +16,7 @@
     "@types/three": "^0.185.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-hot-toast": "^2.6.0",
     "react-rnd": "^10.5.3",
     "three": "^0.185.1",
     "zustand": "^5.0.14"
