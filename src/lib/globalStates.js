@@ -80,11 +80,10 @@ export const useFaceStore = create((set, get) => ({
 }));
 
 export const useUIStore = create((set) => ({
-  // إطلاق توست الخطأ
   setAppError: (msg) => {
     if (msg) {
       toast.error(msg, {
-        id: "app-error", // ⚡ هذه الإضافة تمنع تكرار توست الأخطاء
+        id: "app-error",
         style: {
           borderRadius: "8px",
           background: "#222",
@@ -95,11 +94,10 @@ export const useUIStore = create((set) => ({
     }
   },
 
-  // إطلاق توست النجاح
   setAppSuccess: (msg) => {
     if (msg) {
       toast.success(msg, {
-        id: "app-success", // ⚡ هذه الإضافة تمنع تكرار توست النجاح
+        id: "app-success",
         style: {
           borderRadius: "8px",
           background: "#222",
@@ -129,7 +127,6 @@ export const useUIStore = create((set) => ({
   modelUrl: "/Adam.glb",
   setModelUrl: (url) =>
     set((state) => {
-      // ⚡ تنظيف الـ ObjectURL المولد من المتصفح (Blob) فوراً قبل التغيير لمنع تسرب الذاكرة العشوائية (RAM)
       if (state.modelUrl && state.modelUrl.startsWith("blob:")) {
         URL.revokeObjectURL(state.modelUrl);
       }
@@ -140,18 +137,33 @@ export const useUIStore = create((set) => ({
   setModelBlendshapes: (shapes) => set({ modelBlendshapes: shapes }),
 
   isLowEndMode: false,
-  toggleLowEndMode: () => set((state) => ({ isLowEndMode: !state.isLowEndMode })),
-
+  toggleLowEndMode: () =>
+    set((state) => ({ isLowEndMode: !state.isLowEndMode })),
 
   isSettingsOpen: false,
-  toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
-  
-  pixelRatio: 2, // 2 للأجهزة القوية، 1 للمتوسطة، 0.5 للضعيفة
+  toggleSettings: () =>
+    set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
+
+  pixelRatio: 2,
   setPixelRatio: (val) => set({ pixelRatio: parseFloat(val) }),
-  
-  enableHairPhysics: true, // تفعيل/إلغاء فيزياء الشعر
+
+  enableHairPhysics: true,
   setEnableHairPhysics: (val) => set({ enableHairPhysics: val }),
-  
-  cameraResolution: "640x480", // جودة الكاميرا
+
+  cameraResolution: "640x480",
   setCameraResolution: (val) => set({ cameraResolution: val }),
+
+  // ⚡ الإعدادات الهندسية الجديدة
+  enableAntialias: true,
+  toggleAntialias: () =>
+    set((state) => ({ enableAntialias: !state.enableAntialias })),
+
+  enableShadows: true,
+  toggleShadows: () =>
+    set((state) => ({ enableShadows: !state.enableShadows })),
+
+  enableHDRI: true,
+  toggleHDRI: () => set((state) => ({ enableHDRI: !state.enableHDRI })),
+
+  
 }));

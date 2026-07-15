@@ -17,6 +17,9 @@ function ModelViewer() {
   const setAppSuccess = useUIStore((state) => state.setAppSuccess);
   const setModelBlendshapes = useUIStore((state) => state.setModelBlendshapes);
 
+  // ⚡ استدعاء حالة الظلال
+  const enableShadows = useUIStore((state) => state.enableShadows);
+
   const { scene } = useGLTF(modelUrl);
   const { gl } = useThree();
 
@@ -36,7 +39,6 @@ function ModelViewer() {
     };
   }, [modelUrl]);
 
-  // التحكم بلون الشاشة الخضراء ودقة الريندر خلف الكواليس
   useEffect(() => {
     const initialGreenScreen = useUIStore.getState().isGreenScreen;
     const initialPixelRatio = useUIStore.getState().pixelRatio;
@@ -81,7 +83,13 @@ function ModelViewer() {
     try {
       scene.traverse((child) => {
         if (child.isMesh || child.isSkinnedMesh) {
-          child.frustumCulled = false;
+          child.frustumCulled = true; // ⚡ تمكين القص لتحسين الأداء
+
+          // ⚡ ربط الظلال بحالة الـ Store
+          child.castShadow = enableShadows;
+          child.receiveShadow = enableShadows;
+
+          if (child.material) child.material.needsUpdate = false;
         }
 
         if (child.isBone) {
@@ -126,6 +134,7 @@ function ModelViewer() {
       headBoneRef.current = null;
       hairBonesRef.current = [];
 
+      // ⚡ التنظيف العميق للذاكرة (Memory Cleanup)
       if (scene) {
         scene.traverse((object) => {
           if (object.isMesh) {
@@ -139,7 +148,14 @@ function ModelViewer() {
         });
       }
     };
-  }, [scene, setAppError, setAppSuccess, setModelBlendshapes, modelUrl]);
+  }, [
+    scene,
+    setAppError,
+    setAppSuccess,
+    setModelBlendshapes,
+    modelUrl,
+    enableShadows,
+  ]);
 
   useFrame(() => {
     const mocapData = useFaceStore.getState().metrics;
@@ -174,7 +190,6 @@ function ModelViewer() {
           0.15,
         );
 
-      // تفعيل أو تعطيل فيزياء الشعر بناءً على قائمة الإعدادات
       if (hairBonesRef.current.length > 0 && enableHairPhysics) {
         calculateHairPhysics(
           headBone,
@@ -205,7 +220,6 @@ function ModelViewer() {
         const target = targets[i];
         const currentValue = target.mesh.morphTargetInfluences[target.index];
 
-        // Epsilon Culling: منع الحسابات العبثية إذا لم يتغير التعبير
         if (Math.abs(currentValue - finalValue) > 0.001) {
           target.mesh.morphTargetInfluences[target.index] =
             THREE.MathUtils.lerp(currentValue, finalValue, lerpFactor);
@@ -217,7 +231,13 @@ function ModelViewer() {
   return (
     <>
       <ambientLight intensity={1.5} />
-      <directionalLight position={[0, 5, 5]} intensity={1} />
+      {/* ⚡ ربط الإضاءة الرئيسية بحالة الظلال */}
+      <directionalLight
+        position={[0, 5, 5]}
+        intensity={1}
+        castShadow={enableShadows}
+        shadow-mapSize={[1024, 1024]}
+      />
       {scene && (
         <Center>
           <primitive object={scene} />
