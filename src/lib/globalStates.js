@@ -141,4 +141,17 @@ export const useUIStore = create((set) => ({
 
   isLowEndMode: false,
   toggleLowEndMode: () => set((state) => ({ isLowEndMode: !state.isLowEndMode })),
+
+
+  isSettingsOpen: false,
+  toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
+  
+  pixelRatio: 2, // 2 للأجهزة القوية، 1 للمتوسطة، 0.5 للضعيفة
+  setPixelRatio: (val) => set({ pixelRatio: parseFloat(val) }),
+  
+  enableHairPhysics: true, // تفعيل/إلغاء فيزياء الشعر
+  setEnableHairPhysics: (val) => set({ enableHairPhysics: val }),
+  
+  cameraResolution: "640x480", // جودة الكاميرا
+  setCameraResolution: (val) => set({ cameraResolution: val }),
 }));

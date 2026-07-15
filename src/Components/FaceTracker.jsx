@@ -5,12 +5,14 @@ import { useFaceStore, useUIStore } from "../lib/globalStates";
 
 export default function FaceTracker({ videoRef, isActive, isPaused }) {
   const setLandmarks = useFaceStore((state) => state.setLandmarks);
+  const cameraResolution = useUIStore((state) => state.cameraResolution);
   const animationFrameRef = useRef(null);
 
   useEffect(() => {
     if (!isActive) return;
     let landmarker;
-    let lastRunTime = 0; 
+    let lastRunTime = 0;
+    let activeStream = null;
 
     async function init() {
       try {
@@ -23,11 +25,15 @@ export default function FaceTracker({ videoRef, isActive, isPaused }) {
           runningMode: "VIDEO",
         });
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480 },
+        // استخراج الطول والعرض من النص القادم من الإعدادات
+        const [resWidth, resHeight] = cameraResolution.split("x").map(Number);
+
+        activeStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: resWidth, height: resHeight },
         });
+
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          videoRef.current.srcObject = activeStream;
           videoRef.current.onloadedmetadata = async () => {
             await videoRef.current.play();
             predict();
@@ -48,11 +54,9 @@ export default function FaceTracker({ videoRef, isActive, isPaused }) {
 
       const now = performance.now();
       const video = videoRef.current;
-      
-      const isLowEnd = useUIStore.getState().isLowEndMode;
-      const throttleLimit = isLowEnd ? 33 : 0; // ~30 FPS للأجهزة الضعيفة
 
-      if (now - lastRunTime >= throttleLimit) {
+      // إزالة حد الـ 30FPS القديم الخاص بـ isLowEndMode للسماح للكاميرا بالعمل بأقصى فريمات حسب دقتها
+      if (now - lastRunTime >= 0) {
         if (video && video.readyState === 4) {
           const results = landmarker.detectForVideo(video, now);
           if (results.faceLandmarks?.length > 0) {
@@ -68,13 +72,14 @@ export default function FaceTracker({ videoRef, isActive, isPaused }) {
     init();
 
     return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-      if (videoRef.current?.srcObject) videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
-      
-      // ⚡ السطر الحاسم لمنع تسرب ذاكرة VRAM وانهيار المتصفح
-      if (landmarker) landmarker.close(); 
+      if (animationFrameRef.current)
+        cancelAnimationFrame(animationFrameRef.current);
+      if (activeStream) activeStream.getTracks().forEach((t) => t.stop());
+
+      // السطر الحاسم لمنع تسرب ذاكرة VRAM وانهيار المتصفح
+      if (landmarker) landmarker.close();
     };
-  }, [isActive, videoRef, setLandmarks, isPaused]);
+  }, [isActive, videoRef, setLandmarks, isPaused, cameraResolution]);
 
   return null;
-} // asd
+}

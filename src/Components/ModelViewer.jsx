@@ -39,15 +39,13 @@ function ModelViewer() {
   // التحكم بلون الشاشة الخضراء ودقة الريندر خلف الكواليس
   useEffect(() => {
     const initialGreenScreen = useUIStore.getState().isGreenScreen;
-    const initialLowEnd = useUIStore.getState().isLowEndMode;
+    const initialPixelRatio = useUIStore.getState().pixelRatio;
 
     gl.setClearColor(
       initialGreenScreen ? "#00FF00" : "#000000",
       initialGreenScreen ? 1 : 0,
     );
-    gl.setPixelRatio(
-      initialLowEnd ? 0.7 : Math.min(window.devicePixelRatio, 2),
-    );
+    gl.setPixelRatio(initialPixelRatio);
 
     const unsubscribe = useUIStore.subscribe((state, prevState) => {
       if (state.isGreenScreen !== prevState?.isGreenScreen) {
@@ -56,10 +54,8 @@ function ModelViewer() {
           state.isGreenScreen ? 1 : 0,
         );
       }
-      if (state.isLowEndMode !== prevState?.isLowEndMode) {
-        gl.setPixelRatio(
-          state.isLowEndMode ? 0.7 : Math.min(window.devicePixelRatio, 2),
-        );
+      if (state.pixelRatio !== prevState?.pixelRatio) {
+        gl.setPixelRatio(state.pixelRatio);
       }
     });
 
@@ -154,7 +150,7 @@ function ModelViewer() {
     const headBone = headBoneRef.current;
     if (headBone) {
       const isMirrored = useUIStore.getState().isMirrored;
-      const isLowEnd = useUIStore.getState().isLowEndMode;
+      const enableHairPhysics = useUIStore.getState().enableHairPhysics;
 
       const targetY = isMirrored ? -mocapData.yaw : mocapData.yaw;
       const targetZ = isMirrored ? -mocapData.roll : mocapData.roll;
@@ -178,8 +174,8 @@ function ModelViewer() {
           0.15,
         );
 
-      // تعطيل فيزياء الشعر لدعم الأجهزة الضعيفة
-      if (hairBonesRef.current.length > 0 && !isLowEnd) {
+      // تفعيل أو تعطيل فيزياء الشعر بناءً على قائمة الإعدادات
+      if (hairBonesRef.current.length > 0 && enableHairPhysics) {
         calculateHairPhysics(
           headBone,
           prevHeadRot.current,
@@ -209,7 +205,7 @@ function ModelViewer() {
         const target = targets[i];
         const currentValue = target.mesh.morphTargetInfluences[target.index];
 
-        // ⚡ Epsilon Culling: منع الحسابات العبثية إذا لم يتغير التعبير
+        // Epsilon Culling: منع الحسابات العبثية إذا لم يتغير التعبير
         if (Math.abs(currentValue - finalValue) > 0.001) {
           target.mesh.morphTargetInfluences[target.index] =
             THREE.MathUtils.lerp(currentValue, finalValue, lerpFactor);

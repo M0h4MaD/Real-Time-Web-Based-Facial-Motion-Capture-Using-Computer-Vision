@@ -7,6 +7,7 @@ import { Canvas } from "@react-three/fiber";
 import ModelViewer from "./Components/ModelViewer.jsx";
 import { Stage } from "@react-three/drei";
 import { Toaster } from "react-hot-toast"; // ⚡ إضافة التوست
+import SettingsPanel from "./Components/SettingsPanel.jsx";
 
 // App.jsx (نظيف جداً)
 export default function App() {
@@ -20,6 +21,8 @@ export default function App() {
           duration: 4000,
         }}
       />
+
+        <SettingsPanel />
 
       <main className="main-content">
         <Canvas dpr={[1, 2]} shadows camera={{position:[0,0,1], fov: 45 }}>

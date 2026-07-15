@@ -1,11 +1,10 @@
 /* src/Components/styles/HUD.css */
 
-/* اللوحة الجانبية الأساسية - تم تنحيفها لأقصى درجة مناسبة */
 .side-panel {
   position: fixed;
   top: 0;
   right: 0;
-  width: 230px; /* 🔥 عرض نحيف جداً وأنيق يشبه برامج الـ 3D */
+  width: 230px;
   height: 100vh;
   background: rgba(20, 20, 22, 0.95);
   backdrop-filter: blur(10px);
@@ -16,7 +15,13 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
 }
 
 .side-panel.closed {
@@ -27,7 +32,6 @@
   transform: translateX(0);
 }
 
-/* زر السهم الملتصق بحافة اللوحة الجانبية */
 .toggle-arrow {
   position: absolute;
   top: 50%;
@@ -52,7 +56,6 @@
   background: #2a2a2f;
 }
 
-/* محتوى اللوحة الداخلي */
 .panel-content {
   padding: 20px 15px;
   overflow-y: auto;
@@ -72,7 +75,6 @@
   letter-spacing: 0.5px;
 }
 
-/* مجموعة العدادات */
 .metrics-group {
   display: flex;
   flex-direction: column;
@@ -83,7 +85,6 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* --- تنسيقات الـ MetricBar الكاملة والمصلحة داخل القائمة الجديدة --- */
 .metric-container {
   display: flex;
   flex-direction: column;
@@ -99,34 +100,33 @@
 }
 
 .metric-label {
-  color: #e2e8f0 !important; /* 🔥 لون أبيض رمادي واضح جداً فوق الخلفية الغامقة */
+  color: #e2e8f0 !important;
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .metric-value {
-  color: #c084fc !important; /* 🔥 بنفسجي فاتح ومضيء يظهر بوضوح */
+  color: #c084fc !important;
   font-size: 0.75rem;
   font-weight: 700;
 }
 
 .metric-track {
   width: 100%;
-  height: 5px; /* 🔥 تم تسميك الخط قليلاً ليصبح مرئياً */
-  background: rgba(255, 255, 255, 0.15); /* خلفية رمادية فاتحة وواضحة للبار الأساسي */
+  height: 5px;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .metric-fill {
   height: 100%;
-  background: #a855f7; /* البار الممتلئ بنفسجي ممتاز */
+  background: #a855f7;
   border-radius: 3px;
   transition: width 0.1s ease-out;
 }
 
-/* الأزرار وباقي عناصر التحكم */
 .actions-group {
   display: flex;
   flex-direction: column;
@@ -195,7 +195,6 @@
   font-weight: bold;
 }
 
-/* --- HUD Stats Styles --- */
 .hud-stats-container {
   display: flex;
   flex-direction: column;
@@ -218,12 +217,19 @@
   align-items: center;
 }
 
-.stats-value.status-good { color: #00ffcc; text-shadow: 0 0 5px rgba(0, 255, 204, 0.5); }
-.stats-value.status-warn { color: #ffcc00; text-shadow: 0 0 5px rgba(255, 204, 0, 0.5); }
-.stats-value.status-danger { color: #ff4444; text-shadow: 0 0 5px rgba(255, 68, 68, 0.5); }
+.stats-value.status-good {
+  color: #00ffcc;
+  text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+}
+.stats-value.status-warn {
+  color: #ffcc00;
+  text-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+}
+.stats-value.status-danger {
+  color: #ff4444;
+  text-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+}
 
-
-/* --- Model Inspector Styles --- */
 .model-inspector-container {
   margin-top: 15px;
 }
@@ -283,8 +289,6 @@
   font-size: 10px;
 }
 
-
-/* --- Utilities --- */
 .error-toast-fixed {
   position: fixed;
   top: 20px;
@@ -312,6 +316,12 @@
 }
 
 @keyframes slideDown {
-  from { top: -50px; opacity: 0; }
-  to { top: 20px; opacity: 1; }
+  from {
+    top: -50px;
+    opacity: 0;
+  }
+  to {
+    top: 20px;
+    opacity: 1;
+  }
 }
