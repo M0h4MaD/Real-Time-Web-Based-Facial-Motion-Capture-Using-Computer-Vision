@@ -49,8 +49,7 @@ const HUD = () => {
   const toggleGreenScreen = useUIStore((state) => state.toggleGreenScreen);
   const setModelUrl = useUIStore((state) => state.setModelUrl);
   const setAppError = useUIStore((state) => state.setAppError);
-  const isLowEndMode = useUIStore((state) => state.isLowEndMode);
-  const toggleLowEndMode = useUIStore((state) => state.toggleLowEndMode);
+
 
   const [recordMode, setRecordMode] = useState("keyframes");
   const fileInputRef = useRef(null);
@@ -150,18 +149,7 @@ const HUD = () => {
               Chroma {isGreenScreen ? "ON" : "OFF"}
             </button>
 
-            {/* ⚡ زر الأداء للأجهزة الضعيفة */}
-            <button
-              className={`nav-btn ${isLowEndMode ? "active" : ""}`}
-              onClick={toggleLowEndMode}
-              style={
-                isLowEndMode
-                  ? { border: "1px solid #f59e0b", color: "#f59e0b" }
-                  : {}
-              }
-            >
-              🚀 Boost FPS {isLowEndMode ? "ON" : "OFF"}
-            </button>
+           
 
             <select
               className="nav-btn landmark-select"

@@ -136,9 +136,6 @@ export const useUIStore = create((set) => ({
   modelBlendshapes: [],
   setModelBlendshapes: (shapes) => set({ modelBlendshapes: shapes }),
 
-  isLowEndMode: false,
-  toggleLowEndMode: () =>
-    set((state) => ({ isLowEndMode: !state.isLowEndMode })),
 
   isSettingsOpen: false,
   toggleSettings: () =>
