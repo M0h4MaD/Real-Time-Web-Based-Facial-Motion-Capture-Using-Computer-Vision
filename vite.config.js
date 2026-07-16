@@ -7,5 +7,11 @@ export default defineConfig({
   define: {
     // 🔥 هذا السطر يحل المشكلة جذرياً
     'process.env': {} 
-  }
+  },
+   worker: {
+    format: "es", // ⚡ critical for dynamic import() inside workers to resolve correctly
+  },
+  optimizeDeps: {
+    exclude: ["@mediapipe/tasks-vision"], // ⚡ stops Vite from pre-bundling/transforming the wasm glue
+  },
 })

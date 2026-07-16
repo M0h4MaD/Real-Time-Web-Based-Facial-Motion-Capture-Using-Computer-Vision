@@ -1,48 +1,59 @@
-// src/Components/FaceTracker.jsx
 import { useEffect, useRef } from "react";
-import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { useFaceStore, useUIStore } from "../lib/globalStates";
 
 export default function FaceTracker({ videoRef, isActive, isPaused }) {
   const setLandmarks = useFaceStore((state) => state.setLandmarks);
-  
-  // ⚡ جلب إعدادات الدقة والسرعة من السلايدر
   const cameraResolution = useUIStore((state) => state.cameraResolution);
   const trackingFPS = useUIStore((state) => state.trackingFPS);
-  
+
   const animationFrameRef = useRef(null);
-  
-  // ⚡ إنشاء Canvas وسيط في الذاكرة (لا يظهر للمستخدم) لقص وتصغير الصورة
-  const inferenceCanvasRef = useRef(document.createElement("canvas"));
+  const workerRef = useRef(null);
+  const workerReadyRef = useRef(false);
 
   useEffect(() => {
     if (!isActive) return;
-    let landmarker;
+
+    let cancelled = false;
     let lastRunTime = 0;
     let activeStream = null;
 
-    // 1. استخراج الأبعاد من اختيارك في السلايدر
     const [resWidth, resHeight] = cameraResolution.split("x").map(Number);
-    
-    // 2. تطبيق الأبعاد الصارمة على الـ Canvas الوسيط
-    const canvas = inferenceCanvasRef.current;
-    canvas.width = resWidth;
-    canvas.height = resHeight;
-    
-    // ⚡ استخدام willReadFrequently يخبر المتصفح بتحسين الذاكرة لقراءة البكسلات المستمرة
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+    // ⚡ لازم type: "module" وإلا الـ import جوه الـ worker مش هيتحل، وده أصل الـ moduleFactory error
+    const worker = new Worker(
+      new URL("../lib/faceLandmarker.worker.js", import.meta.url),
+
+    );
+    workerRef.current = worker;
+    workerReadyRef.current = false;
+
+    worker.onmessage = (e) => {
+      const { type, payload } = e.data;
+      if (type === "ready") {
+        workerReadyRef.current = true;
+      } else if (type === "landmarks") {
+        setLandmarks(payload);
+      } else if (type === "error") {
+        console.error("FaceLandmarker worker error:", payload);
+      }
+    };
+
+    worker.onerror = (err) => {
+      console.error("Worker crashed:", err.message);
+    };
+
+    worker.postMessage({
+      type: "init",
+      payload: {
+        wasmPath: "/wasm",
+        modelPath: "/face_landmarker.task",
+        width: resWidth,
+        height: resHeight,
+      },
+    });
 
     async function init() {
       try {
-        const vision = await FilesetResolver.forVisionTasks("/wasm");
-        landmarker = await FaceLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: `/face_landmarker.task`,
-            delegate: "GPU", // كرت الشاشة يتولى المعالجة
-          },
-          runningMode: "VIDEO",
-        });
-
         activeStream = await navigator.mediaDevices.getUserMedia({
           video: { width: resWidth, height: resHeight },
         });
@@ -60,30 +71,39 @@ export default function FaceTracker({ videoRef, isActive, isPaused }) {
     }
 
     function predict() {
-      if (!isActive) return;
+      if (cancelled || !isActive) return;
 
-      if (isPaused) {
+      if (isPaused || !workerReadyRef.current) {
         animationFrameRef.current = requestAnimationFrame(predict);
         return;
       }
 
       const now = performance.now();
       const video = videoRef.current;
-      
-      // حساب الفاصل الزمني بناءً على الإطارات المطلوبة
       const interval = 1000 / trackingFPS;
 
       if (now - lastRunTime >= interval) {
         if (video && video.readyState === 4) {
-          // ⚡ الخطوة الفاصلة: رسم نسخة مصغرة من الفيديو على الـ Canvas
-          ctx.drawImage(video, 0, 0, resWidth, resHeight);
-          
-          // ⚡ إرسال الـ Canvas الخفيف جداً للمعالجة بدلاً من الفيديو الأصلي
-          const results = landmarker.detectForVideo(canvas, now);
-          
-          if (results.faceLandmarks?.length > 0) {
-            setLandmarks(results.faceLandmarks[0]);
-          }
+          // ⚡ نلتقط فريم كـ ImageBitmap على الـ main thread فقط (video عنصر DOM مش قابل للنقل)
+          createImageBitmap(video, {
+            resizeWidth: resWidth,
+            resizeHeight: resHeight,
+          })
+            .then((bitmap) => {
+              workerRef.current?.postMessage(
+                {
+                  type: "frame",
+                  payload: {
+                    bitmap,
+                    width: resWidth,
+                    height: resHeight,
+                    timestamp: now,
+                  },
+                },
+                [bitmap] // ⚡ transfer، مش نسخ — رخيص جداً
+              );
+            })
+            .catch((err) => console.error("createImageBitmap error:", err));
         }
         lastRunTime = now;
       }
@@ -94,11 +114,14 @@ export default function FaceTracker({ videoRef, isActive, isPaused }) {
     init();
 
     return () => {
-      if (animationFrameRef.current)
-        cancelAnimationFrame(animationFrameRef.current);
+      cancelled = true;
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       if (activeStream) activeStream.getTracks().forEach((t) => t.stop());
-      
-      if (landmarker) landmarker.close();
+
+      worker.postMessage({ type: "close" });
+      worker.terminate();
+      workerRef.current = null;
+      workerReadyRef.current = false;
     };
   }, [isActive, videoRef, setLandmarks, isPaused, cameraResolution, trackingFPS]);
 

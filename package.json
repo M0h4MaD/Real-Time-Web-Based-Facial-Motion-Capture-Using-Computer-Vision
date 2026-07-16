@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:mediapipe": "node scripts/build-mediapipe-bundle.mjs",
+    "predev": "npm run build:mediapipe",
+    "prebuild": "npm run build:mediapipe"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^0.10.35",
@@ -26,6 +29,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "esbuild": "^0.28.1",
     "eslint": "^10.6.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
