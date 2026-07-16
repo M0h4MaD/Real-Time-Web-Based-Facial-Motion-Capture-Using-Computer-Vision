@@ -20,12 +20,11 @@ export default function SettingsPanel() {
     toggleShadows,
     enableHDRI,
     toggleHDRI,
-    isVideoVisible,
-    toggleVideoVisibility,
+    trackingFPS, // ⚡ استدعاء الحالة
+    setTrackingFPS, // ⚡ استدعاء الدالة
   } = useUIStore();
 
   const handleClearCache = () => {
-    // ⚡ مسح الذاكرة المؤقتة لمحرك Three.js
     THREE.Cache.clear();
     toast.success("Memory Optimized & Cache Cleared! 🧹", {
       style: {
@@ -145,6 +144,50 @@ export default function SettingsPanel() {
             </select>
           </div>
 
+          {/* ⚡ قسم التحكم بسرعة التتبع (الجديد) */}
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.03)",
+              padding: "10px",
+              borderRadius: "8px",
+              border: "1px solid rgba(255, 255, 255, 0.05)",
+            }}
+          >
+            <label
+              style={{
+                display: "block",
+                marginBottom: "8px",
+                fontSize: "12px",
+                color: "#e2e8f0",
+                fontWeight: "500",
+              }}
+            >
+              🎯 Tracking FPS:{" "}
+              <span style={{ color: "#4ade80" }}>{trackingFPS}</span>
+            </label>
+            <select
+              value={trackingFPS}
+              onChange={(e) => setTrackingFPS(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "6px",
+                borderRadius: "6px",
+                background: "#2a2a2f",
+                color: "white",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                outline: "none",
+                cursor: "pointer",
+                fontSize: "12px",
+              }}
+            >
+              <option value={15}>15 FPS (Power Saver)</option>
+              <option value={20}>20 FPS (Smooth Enough)</option>
+              <option value={25}>25 FPS (Balanced)</option>
+              <option value={30}>30 FPS (High Performance)</option>
+              <option value={60}>MAX (60 FPS)</option>
+            </select>
+          </div>
+
           <div
             style={{
               background: "rgba(255, 255, 255, 0.03)",
@@ -182,7 +225,6 @@ export default function SettingsPanel() {
             />
           </div>
 
-          {/* ⚡ التبديلات الجديدة (Toggles) */}
           <div
             style={{
               display: "flex",
@@ -269,7 +311,7 @@ export default function SettingsPanel() {
                 style={{ cursor: "pointer", accentColor: "#a855f7" }}
               />
             </div>
-                
+
             <div
               style={{
                 display: "flex",
@@ -297,7 +339,6 @@ export default function SettingsPanel() {
             </div>
           </div>
 
-          {/* ⚡ زر تفريغ الذاكرة */}
           <button
             onClick={handleClearCache}
             style={{

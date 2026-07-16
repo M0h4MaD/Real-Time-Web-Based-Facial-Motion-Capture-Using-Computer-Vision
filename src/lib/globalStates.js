@@ -136,7 +136,6 @@ export const useUIStore = create((set) => ({
   modelBlendshapes: [],
   setModelBlendshapes: (shapes) => set({ modelBlendshapes: shapes }),
 
-
   isSettingsOpen: false,
   toggleSettings: () =>
     set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
@@ -150,7 +149,7 @@ export const useUIStore = create((set) => ({
   cameraResolution: "640x480",
   setCameraResolution: (val) => set({ cameraResolution: val }),
 
-  // ⚡ الإعدادات الهندسية الجديدة
+  // ⚡ الإعدادات الهندسية
   enableAntialias: true,
   toggleAntialias: () =>
     set((state) => ({ enableAntialias: !state.enableAntialias })),
@@ -162,5 +161,7 @@ export const useUIStore = create((set) => ({
   enableHDRI: true,
   toggleHDRI: () => set((state) => ({ enableHDRI: !state.enableHDRI })),
 
-  
+  // ⚡ الإعداد الجديد: التحكم في سرعة التتبع
+  trackingFPS: 30, // 30 إطاراً في الثانية كقيمة افتراضية
+  setTrackingFPS: (val) => set({ trackingFPS: parseInt(val) }),
 }));
