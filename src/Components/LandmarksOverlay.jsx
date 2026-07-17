@@ -1,5 +1,5 @@
 // src/Components/LandmarksOverlay.jsx
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { useEffect, useRef, useMemo, useState } from "react";
 import { useFaceStore, useUIStore } from "../lib/globalStates";
 
 const mouthIndices = [61, 291, 0, 17, 13, 14];
@@ -73,9 +73,33 @@ const faceContourConnections = [
 ];
 
 const LandmarksOverlay = () => {
+  const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const landmarks = useFaceStore((state) => state.landmarks);
   const landmarkMode = useUIStore((state) => state.landmarkMode);
+
+  // ⚡ الحل: بدل ما نحط width/height ثابتين (320x240)، منتابع الحجم
+  // الفعلي للحاوية عن طريق ResizeObserver ومنحدّث الـ canvas backing store
+  // تبعو ليطابقها. هيك القناع بيتماشى مع أي دقة كاميرا أو حجم نافذة تتبع
+  // (Rnd) بدل ما يضل ثابت على 320x240 دايماً.
+  const [size, setSize] = useState({ width: 320, height: 240 });
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setSize({ width: Math.round(width), height: Math.round(height) });
+        }
+      }
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   const { pointsToDraw, connectionsToDraw } = useMemo(() => {
     let pts = [];
@@ -200,26 +224,38 @@ const LandmarksOverlay = () => {
         ctx.fill();
       }
     }
-  }, [landmarks, pointsToDraw, connectionsToDraw, landmarkMode]);
+  }, [landmarks, pointsToDraw, connectionsToDraw, landmarkMode, size]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={320}
-      height={240}
-      className="landmarks-canvas"
+    <div
+      ref={containerRef}
       style={{
         position: "absolute",
         top: 0,
         left: 0,
         width: "100%",
         height: "100%",
-        visibility:
-          landmarkMode && landmarkMode !== "off" ? "visible" : "hidden",
         pointerEvents: "none",
         zIndex: 1,
       }}
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        width={size.width}
+        height={size.height}
+        className="landmarks-canvas"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          visibility:
+            landmarkMode && landmarkMode !== "off" ? "visible" : "hidden",
+          pointerEvents: "none",
+        }}
+      />
+    </div>
   );
 };
 

@@ -13,9 +13,9 @@ export function calculateHairPhysics(headBone, prevHeadRot, hairBones, hairPhysi
   prevHeadRot.x = headBone.rotation.x;
 
   // ثوابت الفيزياء
-  const stiffness = 0.04; 
-  const damping = 0.75;  
-  const inertia = 0.14;  
+  const stiffness = 0.04; //معامل الصلابة
+  const damping = 0.75;  //معامل التخميد
+  const inertia = 0.14;  //معامل القصور الذاتي
 
   hairBones.forEach((bone) => {
     const state = hairPhysicsState[bone.name];
