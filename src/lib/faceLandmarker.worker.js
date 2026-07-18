@@ -27,28 +27,36 @@ self.onmessage = async (e) => {
         break;
       }
 
-      // ⚡ ما عاد في حاجة لـ resize/canvas إطلاقاً — detectForVideo بياخد ImageBitmap مباشرة
-
       case "frame": {
         const { bitmap, timestamp } = payload;
         if (!landmarker) {
           bitmap.close();
-          // ⚡ مهم: لازم نرجّع "done" حتى لو ما عالجنا شي، وإلا الـ main thread هيفضل واقف مستني رد ما بيجيش
           self.postMessage({ type: "done" });
           return;
         }
 
         try {
-          // ⚡ التعديل الأهم: تمرير الـ bitmap مباشرة، بدون أي canvas أو drawImage وسيط
+          // ⚡ لسا عم نمرر الـ bitmap مباشرة لـ detectForVideo (بدون canvas وسيط)
           const results = landmarker.detectForVideo(bitmap, timestamp);
 
           if (results.faceLandmarks?.length > 0) {
-            self.postMessage({
-              type: "landmarks",
-              payload: results.faceLandmarks[0],
-            });
+            const lm = results.faceLandmarks[0];
+
+            // ⚡ الجديد: تحويل الـ 478 كائن {x,y,z} لـ Float32Array مسطّح واحد
+            // (478 × 3 = 1434 رقم). هيك بدل ما نعمل structured clone لـ 478
+            // كائن JS كل فريم، عم ننقل buffer واحد بدون نسخ (transfer صفر تكلفة)
+            const flat = new Float32Array(lm.length * 3);
+            for (let i = 0; i < lm.length; i++) {
+              const p = lm[i];
+              flat[i * 3] = p.x;
+              flat[i * 3 + 1] = p.y;
+              flat[i * 3 + 2] = p.z;
+            }
+
+            self.postMessage({ type: "landmarks", payload: flat }, [
+              flat.buffer,
+            ]);
           } else {
-            // ⚡ لازم نبلغ حتى لو ما في وجه، عشان الـ main thread يعرف يبعت الفريم يلي بعده
             self.postMessage({ type: "no-face" });
           }
         } finally {
@@ -65,7 +73,6 @@ self.onmessage = async (e) => {
     }
   } catch (err) {
     self.postMessage({ type: "error", payload: String(err?.message || err) });
-    // ⚡ حتى بحالة الخطأ، لازم نحرر الـ main thread من انتظار busy=false
     if (type === "frame") self.postMessage({ type: "done" });
   }
 };

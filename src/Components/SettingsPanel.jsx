@@ -5,24 +5,22 @@ import * as THREE from "three";
 import toast from "react-hot-toast";
 
 export default function SettingsPanel() {
-  const {
-    isSettingsOpen,
-    toggleSettings,
-    pixelRatio,
-    setPixelRatio,
-    enableHairPhysics,
-    setEnableHairPhysics,
-    cameraResolution,
-    setCameraResolution,
-    enableAntialias,
-    toggleAntialias,
-    enableShadows,
-    toggleShadows,
-    enableHDRI,
-    toggleHDRI,
-    trackingFPS, // ⚡ استدعاء الحالة
-    setTrackingFPS, // ⚡ استدعاء الدالة
-  } = useUIStore();
+  const isSettingsOpen = useUIStore((state) => state.isSettingsOpen);
+  const toggleSettings = useUIStore((state) => state.toggleSettings);
+  const pixelRatio = useUIStore((state) => state.pixelRatio);
+  const setPixelRatio = useUIStore((state) => state.setPixelRatio);
+  const enableHairPhysics = useUIStore((state) => state.enableHairPhysics);
+  const setEnableHairPhysics = useUIStore((state) => state.setEnableHairPhysics);
+  const cameraResolution = useUIStore((state) => state.cameraResolution);
+  const setCameraResolution = useUIStore((state) => state.setCameraResolution);
+  const enableAntialias = useUIStore((state) => state.enableAntialias);
+  const toggleAntialias = useUIStore((state) => state.toggleAntialias);
+  const enableShadows = useUIStore((state) => state.enableShadows);
+  const toggleShadows = useUIStore((state) => state.toggleShadows);
+  const enableHDRI = useUIStore((state) => state.enableHDRI);
+  const toggleHDRI = useUIStore((state) => state.toggleHDRI);
+  const trackingFPS = useUIStore((state) => state.trackingFPS);
+  const setTrackingFPS = useUIStore((state) => state.setTrackingFPS);
 
   const handleClearCache = () => {
     THREE.Cache.clear();

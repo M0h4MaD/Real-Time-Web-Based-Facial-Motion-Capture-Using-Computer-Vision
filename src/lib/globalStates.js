@@ -3,15 +3,33 @@ import { create } from "zustand";
 import { processFaceMetrics } from "./FaceCalculations";
 import toast from "react-hot-toast";
 
-// نظام فلترة ذكي لمنع تداخل المحاور (Cross-talk) وتنعيم الحركة
+// ⚡ نظام فلترة ذكي لمنع تداخل المحاور (Cross-talk) وتنعيم الحركة
+// التعديل الأهم: التنعيم صار مستقل عن الـ FPS (delta-time corrected).
+// قبل، smoothFactor=0.5 كان يتطبق "مرة كل استدعاء" بغض النظر عن الوقت
+// الفعلي بين الاستدعاءات — فلو المستخدم غيّر Tracking FPS من 30 لـ 15،
+// نفس الرقم كان يعطي إحساس حركة مختلف تماماً. هلق منحسب الوقت الفعلي
+// (performance.now) ومنصحح عامل التنعيم حسبه، فالإحساس بالحركة ثابت
+// بغض النظر عن الـ FPS المختار.
 let prevPitch = 0;
 let prevYaw = 0;
 let prevRoll = 0;
+let prevFilterTime = null;
+
+const SMOOTH_FACTOR_BASE = 0.5;
+const REFERENCE_INTERVAL_MS = 1000 / 30; // مرجع 30fps (نفس القيمة الافتراضية لـ trackingFPS)
+const MAX_TIME_SCALE = 5; // حماية من قفزة ضخمة لو التبويب كان بالخلفية لفترة
 
 const applySmartFilter = (rawMetrics) => {
   if (!rawMetrics) return rawMetrics;
 
-  const smoothFactor = 0.5;
+  const now = performance.now();
+  const dt =
+    prevFilterTime === null ? REFERENCE_INTERVAL_MS : now - prevFilterTime;
+  prevFilterTime = now;
+
+  const timeScale = Math.min(MAX_TIME_SCALE, dt / REFERENCE_INTERVAL_MS);
+  const smoothFactor = 1 - Math.pow(1 - SMOOTH_FACTOR_BASE, timeScale);
+
   let pitchDamping = 1.0;
 
   if (rawMetrics.yaw !== undefined && Math.abs(rawMetrics.yaw) > 0.25) {
@@ -149,7 +167,6 @@ export const useUIStore = create((set) => ({
   cameraResolution: "640x480",
   setCameraResolution: (val) => set({ cameraResolution: val }),
 
-  // ⚡ الإعدادات الهندسية
   enableAntialias: true,
   toggleAntialias: () =>
     set((state) => ({ enableAntialias: !state.enableAntialias })),
@@ -161,7 +178,6 @@ export const useUIStore = create((set) => ({
   enableHDRI: true,
   toggleHDRI: () => set((state) => ({ enableHDRI: !state.enableHDRI })),
 
-  // ⚡ الإعداد الجديد: التحكم في سرعة التتبع
-  trackingFPS: 30, // 30 إطاراً في الثانية كقيمة افتراضية
+  trackingFPS: 30,
   setTrackingFPS: (val) => set({ trackingFPS: parseInt(val) }),
 }));

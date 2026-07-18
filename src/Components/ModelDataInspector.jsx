@@ -3,15 +3,12 @@ import { useState } from "react";
 import { useUIStore } from "../lib/globalStates.js";
 
 export default function ModelDataInspector() {
-  const { modelBlendshapes } = useUIStore();
+  const modelBlendshapes = useUIStore((state) => state.modelBlendshapes);
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="model-inspector-container">
-      <button 
-        className="inspector-btn"
-        onClick={() => setIsOpen(!isOpen)}
-      >
+      <button className="inspector-btn" onClick={() => setIsOpen(!isOpen)}>
         <span>📦 Model Blendshapes ({modelBlendshapes.length})</span>
         <span>{isOpen ? "▼" : "▶"}</span>
       </button>
@@ -25,7 +22,9 @@ export default function ModelDataInspector() {
           ) : (
             modelBlendshapes.map((shapeName, index) => (
               <div key={index} className="inspector-item">
-                <span className="inspector-item-name">{index + 1}. {shapeName}</span>
+                <span className="inspector-item-name">
+                  {index + 1}. {shapeName}
+                </span>
                 <span className="inspector-item-status">READY</span>
               </div>
             ))

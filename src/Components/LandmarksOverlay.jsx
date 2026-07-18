@@ -72,16 +72,20 @@ const faceContourConnections = [
   [109, 10],
 ];
 
+// ⚡ اللاندماركس هلق Float32Array مسطّح: النقطة i موجودة عند landmarks[i*3] (x)
+// و landmarks[i*3+1] (y). هلبر بسيط لقراءتها بدل landmarks[i].x القديمة
+const lx = (landmarks, i) => landmarks[i * 3];
+const ly = (landmarks, i) => landmarks[i * 3 + 1];
+const hasPoint = (landmarks, i) => landmarks.length > i * 3 + 1;
+
 const LandmarksOverlay = () => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const landmarks = useFaceStore((state) => state.landmarks);
   const landmarkMode = useUIStore((state) => state.landmarkMode);
 
-  // ⚡ الحل: بدل ما نحط width/height ثابتين (320x240)، منتابع الحجم
-  // الفعلي للحاوية عن طريق ResizeObserver ومنحدّث الـ canvas backing store
-  // تبعو ليطابقها. هيك القناع بيتماشى مع أي دقة كاميرا أو حجم نافذة تتبع
-  // (Rnd) بدل ما يضل ثابت على 320x240 دايماً.
+  // ⚡ حجم الـ canvas صار ديناميكي (ResizeObserver) بدل ما يكون ثابت 320x240 —
+  // هيك بيتماشى صح مع أي دقة كاميرا أو حجم نافذة تتبع (Rnd)
   const [size, setSize] = useState({ width: 320, height: 240 });
 
   useEffect(() => {
@@ -173,14 +177,14 @@ const LandmarksOverlay = () => {
 
       for (let i = 0; i < connectionsToDraw.length; i++) {
         const [i1, i2] = connectionsToDraw[i];
-        if (landmarks[i1] && landmarks[i2]) {
+        if (hasPoint(landmarks, i1) && hasPoint(landmarks, i2)) {
           ctx.moveTo(
-            landmarks[i1].x * canvas.width,
-            landmarks[i1].y * canvas.height,
+            lx(landmarks, i1) * canvas.width,
+            ly(landmarks, i1) * canvas.height,
           );
           ctx.lineTo(
-            landmarks[i2].x * canvas.width,
-            landmarks[i2].y * canvas.height,
+            lx(landmarks, i2) * canvas.width,
+            ly(landmarks, i2) * canvas.height,
           );
         }
       }
@@ -190,14 +194,13 @@ const LandmarksOverlay = () => {
 
     // 2. رسم النقاط بنظام Batch Rendering فائق السرعة
     if (pointsToDraw.length > 0) {
-      // النقاط الأساسية (الخضراء أو السايبربانك)
       ctx.beginPath();
       for (let i = 0; i < pointsToDraw.length; i++) {
         const index = pointsToDraw[i];
-        if (!redIndices.has(index) && landmarks[index]) {
+        if (!redIndices.has(index) && hasPoint(landmarks, index)) {
           ctx.rect(
-            landmarks[index].x * canvas.width,
-            landmarks[index].y * canvas.height,
+            lx(landmarks, index) * canvas.width,
+            ly(landmarks, index) * canvas.height,
             1.5,
             1.5,
           );
@@ -206,15 +209,14 @@ const LandmarksOverlay = () => {
       ctx.fillStyle = landmarkMode === "cyberpunk" ? "#00FFCC" : "#00FF00";
       ctx.fill();
 
-      // النقاط الحمراء (بأمر رسم مجمع واحد)
       if (landmarkMode !== "cyberpunk") {
         ctx.beginPath();
         for (let i = 0; i < pointsToDraw.length; i++) {
           const index = pointsToDraw[i];
-          if (redIndices.has(index) && landmarks[index]) {
+          if (redIndices.has(index) && hasPoint(landmarks, index)) {
             ctx.rect(
-              landmarks[index].x * canvas.width,
-              landmarks[index].y * canvas.height,
+              lx(landmarks, index) * canvas.width,
+              ly(landmarks, index) * canvas.height,
               2.5,
               2.5,
             );
