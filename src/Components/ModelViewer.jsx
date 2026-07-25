@@ -1,4 +1,9 @@
-// src/Components/ModelViewer.jsx
+// File: src/Components/ModelViewer.jsx
+// Description: The 3D model renderer. Loads the GLTF model, wires up head
+// bone rotation, hair physics, and blendshape morph targets driven by the
+// face metrics each frame (FPS-independent lerp), and applies green-screen /
+// pixel-ratio settings reactively.
+
 import React, { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Center } from "@react-three/drei";
@@ -10,10 +15,10 @@ import { recordCurrentFrame } from "../lib/recorder";
 
 const isValidNumber = (n) => typeof n === "number" && isFinite(n) && !isNaN(n);
 
-// ⚡ Set بدل Array — فحص O(1) بدل O(n) (فرق بسيط بس صحيح معمارياً لأنه بيتفحص كل فريم)
+// Set instead of Array for O(1) lookups — checked every frame
 const IGNORED_SHAPES = new Set(["yaw", "pitch", "roll", "mouth", "blink"]);
 
-// ⚡ مرجع 60fps لتصحيح كل عوامل الـ lerp لتكون مستقلة عن الـ FPS الفعلي
+// 60fps reference delta to normalize all lerp factors (FPS-independent)
 const REFERENCE_DELTA = 1 / 60;
 const HEAD_LERP_BASE = 0.15;
 const MOUTH_LERP_BASE = 0.45;
@@ -34,7 +39,6 @@ function ModelViewer() {
   const prevHeadRot = useRef({ y: 0, x: 0 });
   const hairPhysicsState = useRef({});
   const blendshapeTargetMapRef = useRef({});
-
   const loadedModelRef = useRef(null);
 
   useEffect(() => {
@@ -118,8 +122,7 @@ function ModelViewer() {
             ([shapeName, index]) => {
               allAvailableShapes.add(shapeName);
               if (!targetMap[shapeName]) targetMap[shapeName] = [];
-              // ⚡ نحسب isMouthShape مرة وحدة هون (وقت بناء الخريطة)
-              // بدل ما نعيد حساب shapeName.toLowerCase().includes(...) كل فريم
+              // Determine once whether this shape is a mouth shape (computed at build time)
               const isMouthShape =
                 shapeName.toLowerCase().includes("mouth") ||
                 shapeName.toLowerCase().includes("jaw");
@@ -155,17 +158,9 @@ function ModelViewer() {
         });
       }
     };
-  }, [
-    scene,
-    setAppError,
-    setAppSuccess,
-    setModelBlendshapes,
-    modelUrl,
-    enableShadows,
-  ]);
+  }, [scene, setAppError, setAppSuccess, setModelBlendshapes, modelUrl, enableShadows]);
 
-  // ⚡ useFrame هلق بياخد (state, delta) — delta هو الوقت الفعلي بالثواني
-  // منذ آخر فريم، ومنستخدمه لتصحيح كل عوامل الـ lerp والفيزياء
+  // Per-frame update: head rotation, hair physics, and blendshape morphing
   useFrame((state, delta) => {
     const mocapData = useFaceStore.getState().metrics;
     if (!mocapData || !scene) return;
@@ -173,7 +168,6 @@ function ModelViewer() {
     if (typeof recordCurrentFrame === "function") recordCurrentFrame(mocapData);
 
     const timeScale = delta / REFERENCE_DELTA;
-    // ⚡ تحويل عامل lerp ثابت لعامل "مستقل عن الـ FPS" (نفس مبدأ damping بالفيزياء)
     const headLerp = 1 - Math.pow(1 - HEAD_LERP_BASE, timeScale);
 
     const headBone = headBoneRef.current;
@@ -185,26 +179,13 @@ function ModelViewer() {
       const targetZ = isMirrored ? -mocapData.roll : mocapData.roll;
 
       if (isValidNumber(mocapData.yaw))
-        headBone.rotation.y = THREE.MathUtils.lerp(
-          headBone.rotation.y,
-          targetY,
-          headLerp,
-        );
+        headBone.rotation.y = THREE.MathUtils.lerp(headBone.rotation.y, targetY, headLerp);
       if (isValidNumber(mocapData.pitch))
-        headBone.rotation.x = THREE.MathUtils.lerp(
-          headBone.rotation.x,
-          mocapData.pitch,
-          headLerp,
-        );
+        headBone.rotation.x = THREE.MathUtils.lerp(headBone.rotation.x, mocapData.pitch, headLerp);
       if (isValidNumber(mocapData.roll))
-        headBone.rotation.z = THREE.MathUtils.lerp(
-          headBone.rotation.z,
-          targetZ,
-          headLerp,
-        );
+        headBone.rotation.z = THREE.MathUtils.lerp(headBone.rotation.z, targetZ, headLerp);
 
       if (hairBonesRef.current.length > 0 && enableHairPhysics) {
-        // ⚡ تمرير delta لمحرك فيزياء الشعر ليصير مستقل عن الـ FPS هو كمان
         calculateHairPhysics(
           headBone,
           prevHeadRot.current,
@@ -216,7 +197,7 @@ function ModelViewer() {
       }
     }
 
-    // ⚡ for...in بدل Object.entries(...).forEach — بيتفادى تخصيص array جديد كل فريم
+    // Apply blendshape morph targets (skip ignored axes like yaw/pitch/roll)
     for (const shapeName in mocapData) {
       if (IGNORED_SHAPES.has(shapeName)) continue;
 

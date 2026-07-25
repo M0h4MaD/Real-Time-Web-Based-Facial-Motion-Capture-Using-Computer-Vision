@@ -1,5 +1,3 @@
-/* src/Components/styles/TrackingOverlay.css */
-
 .floating-container {
   position: fixed;
   bottom: 20px;
@@ -26,7 +24,6 @@
   background: #3a3a40;
 }
 
-/* تنسيق النافذة العائمة الخاصة بـ react-rnd */
 .draggable-video-window {
   border-radius: 12px;
   overflow: hidden;
@@ -36,16 +33,14 @@
   display: flex;
   flex-direction: column;
   
-  /* 🔥 هذه الأسطر تجبر المتصفح على استخدام كرت الشاشة وتسريع الأداء */
-  will-change: transform, width, height; 
-  transform: translateZ(0); 
+  will-change: transform, width, height;
+  transform: translateZ(0);
   backface-visibility: hidden;
 }
 
-/* 🔥 تصميم شريط السحب الأنيق (مثل الآيباد/الماك) */
 .drag-handle {
   width: 100%;
-  height: 24px; /* مساحة مريحة للسحب */
+  height: 24px;
   background: #1a1a1c;
   display: flex;
   align-items: center;
@@ -59,7 +54,6 @@
   cursor: grabbing;
 }
 
-/* الخط الصغير في منتصف شريط السحب */
 .drag-icon {
   width: 35px;
   height: 4px;
@@ -72,11 +66,10 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* تغليف الفيديو */
 .video-wrapper {
   position: relative;
-  width: 100%; 
-  height: calc(100% - 24px); /* خصم مساحة شريط السحب */
+  width: 100%;
+  height: calc(100% - 24px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,7 +84,7 @@
   height: 100%;
   object-fit: cover;
   z-index: 1;
-  pointer-events: none; /* لمنع أي تفاعل يعطل الأداء */
+  pointer-events: none;
 }
 
 .landmarks-canvas {

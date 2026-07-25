@@ -1,10 +1,11 @@
-// src/lib/FaceCalculations.js
+// File: src/lib/FaceCalculations.js
 //
-// ⚡ ملاحظة معمارية مهمة: `landmarks` هلق Float32Array مسطّح (478 × 3 رقم)
-// مش array of {x,y,z} objects متل قبل. اللاندماركس المفردة يلي فعلاً منستخدمها
-// (عن طريق getPoint) بتتحول لـ object صغير وقت الحاجة بس — يعني بنخصص
-// object جديد لـ ~20 نقطة فقط يلي منحسب عليها، مش كل الـ 478.
+// Important architectural note: `landmarks` is now a flat Float32Array (478 x 3 numbers)
+// instead of an array of {x,y,z} objects. Individual points used in calculations
+// are converted to small objects on demand via getPoint, so we only allocate
+// ~20 point objects per frame instead of all 478.
 
+// Landmark index constants for key facial features
 const LM = {
   eyeL: [33, 160, 158, 133, 153, 144],
   eyeR: [362, 385, 387, 263, 373, 380],
@@ -27,6 +28,7 @@ const LM = {
   browInnerR: 336,
 };
 
+// Tunable configuration values for metric calculations
 const CONFIG = {
   HEAD_PITCH_OFFSET: -0.15,
   EAR_THRESHOLD: 0.15,
@@ -41,18 +43,19 @@ const CONFIG = {
   BROW_KNIT_MULT: 40,
   JOY_THRESHOLD: 0.003,
   SAD_THRESHOLD: -0.002,
-  EAR_ATTACK: 0.7, // استجابة سريعة جداً لما العين تسكر — يلتقط الرمشات السريعة كاملة
-  EAR_RELEASE: 0.25, // استجابة أهدأ لما العين تفتح — يمنع الرعشة عند العتبة
+  EAR_ATTACK: 0.7,
+  EAR_RELEASE: 0.25,
   PITCH_COMPENSATION_CLAMP: 0.5,
 };
 
-// ⚡ استخراج نقطة واحدة من الـ Float32Array المسطّح
+// Extract a single point {x,y,z} from the flat Float32Array
 const getPoint = (landmarks, i) => ({
   x: landmarks[i * 3],
   y: landmarks[i * 3 + 1],
   z: landmarks[i * 3 + 2],
 });
 
+// Compute the 3D Euclidean distance between two points
 const get3DDist = (p1, p2) => {
   const dx = p1.x - p2.x;
   const dy = p1.y - p2.y;
@@ -60,38 +63,35 @@ const get3DDist = (p1, p2) => {
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 };
 
+// Compute the Eye Aspect Ratio (EAR) from six eye landmark indices
 const calculateEAR = (landmarks, indices) => {
-  const v1 = get3DDist(
-    getPoint(landmarks, indices[1]),
-    getPoint(landmarks, indices[5]),
-  );
-  const v2 = get3DDist(
-    getPoint(landmarks, indices[2]),
-    getPoint(landmarks, indices[4]),
-  );
-  const h = get3DDist(
-    getPoint(landmarks, indices[0]),
-    getPoint(landmarks, indices[3]),
-  );
+  const v1 = get3DDist(getPoint(landmarks, indices[1]), getPoint(landmarks, indices[5]));
+  const v2 = get3DDist(getPoint(landmarks, indices[2]), getPoint(landmarks, indices[4]));
+  const h = get3DDist(getPoint(landmarks, indices[0]), getPoint(landmarks, indices[3]));
   return (v1 + v2) / (2.0 * (h || 1));
 };
 
+// Module-level smoothed EAR values (left and right)
 let smoothedEarL = null;
 let smoothedEarR = null;
 
+// Reset the blink smoothing state
 export const resetBlinkSmoothing = () => {
   smoothedEarL = null;
   smoothedEarR = null;
 };
 
+// Main entry: convert raw landmarks into a metrics object
 export const processFaceMetrics = (
   landmarks,
   baseline = null,
   isCalibrating = false,
   onCalibrateComplete = null,
 ) => {
+  // Bail if there are no landmarks
   if (!landmarks || landmarks.length === 0) return null;
 
+  // Extract key facial points from the flat landmark array
   const rightCheek = getPoint(landmarks, LM.rightCheek);
   const leftCheek = getPoint(landmarks, LM.leftCheek);
   const noseTip = getPoint(landmarks, LM.noseTip);
@@ -109,6 +109,7 @@ export const processFaceMetrics = (
   const eyeL_ref = getPoint(landmarks, LM.eyeL_ref);
   const eyeR_ref = getPoint(landmarks, LM.eyeR_ref);
 
+  // Calculate head rotation angles from facial geometry
   const dX_Cheeks = rightCheek.x - leftCheek.x;
   const dZ_Cheeks = rightCheek.z - leftCheek.z;
   const yawAngle = Math.atan2(dZ_Cheeks, dX_Cheeks);
@@ -119,24 +120,30 @@ export const processFaceMetrics = (
 
   const rollAngle = Math.atan2(rightCheek.y - leftCheek.y, dX_Cheeks);
 
+  // Calculate face width and height for normalization
   const faceWidth = get3DDist(leftCheek, rightCheek);
   const faceHeight = get3DDist(forehead, chin);
 
+  // Normalized mouth dimensions
   const mouthH = get3DDist(mouthInnerTop, mouthInnerBot) / faceHeight;
   const mouthW = get3DDist(mouthCornerL, mouthCornerR) / faceWidth;
 
+  // Average mouth-corner-to-chin distance (normalized)
   const distCornerL_Chin = get3DDist(mouthCornerL, chin);
   const distCornerR_Chin = get3DDist(mouthCornerR, chin);
   const avgCornerChinDist =
     (distCornerL_Chin + distCornerR_Chin) / 2 / faceHeight;
 
+  // Eye aspect ratios for blink detection
   const earL = calculateEAR(landmarks, LM.eyeL);
   const earR = calculateEAR(landmarks, LM.eyeR);
+  // Normalized brow distances
   const browL_Dist = get3DDist(browPeakL, eyeL_ref) / faceHeight;
   const browR_Dist = get3DDist(browPeakR, eyeR_ref) / faceHeight;
   const avgBrowDist = (browL_Dist + browR_Dist) / 2;
   const innerBrowDist = get3DDist(browInnerL, browInnerR) / faceWidth;
 
+  // If calibrating, capture the baseline and return nothing
   if (isCalibrating && onCalibrateComplete) {
     resetBlinkSmoothing();
     onCalibrateComplete({
@@ -154,6 +161,7 @@ export const processFaceMetrics = (
     return null;
   }
 
+  // Use the provided baseline or sensible defaults
   const base = baseline || {};
   const b_earL = base.earL ?? 0.3;
   const b_earR = base.earR ?? 0.3;
@@ -163,30 +171,36 @@ export const processFaceMetrics = (
   const b_browDist = base.avgBrowDist ?? 0.16;
   const b_innerBrow = base.baseInnerBrow ?? 0.18;
 
+  // Subtract the baseline from the head rotations
   const finalYaw = yawAngle - (base.baseYaw ?? 0);
   const finalPitch =
     pitchAngle - (base.basePitch ?? 0) + CONFIG.HEAD_PITCH_OFFSET;
   const finalRoll = rollAngle - (base.baseRoll ?? 0);
 
+  // Compensate EAR for pitch (face tilt toward camera)
   const pitchCompensation =
     1 / Math.max(CONFIG.PITCH_COMPENSATION_CLAMP, Math.cos(pitchAngle));
   const earL_compensated = earL * pitchCompensation;
   const earR_compensated = earR * pitchCompensation;
 
+  // Choose attack/release alpha based on whether the eye is closing
   const alphaL =
     earL_compensated < smoothedEarL ? CONFIG.EAR_ATTACK : CONFIG.EAR_RELEASE;
   const alphaR =
     earR_compensated < smoothedEarR ? CONFIG.EAR_ATTACK : CONFIG.EAR_RELEASE;
 
+  // Smooth the left EAR (init on first frame, else exponential smoothing)
   smoothedEarL =
     smoothedEarL === null
       ? earL_compensated
       : smoothedEarL + (earL_compensated - smoothedEarL) * alphaL;
+  // Smooth the right EAR
   smoothedEarR =
     smoothedEarR === null
       ? earR_compensated
       : smoothedEarR + (earR_compensated - smoothedEarR) * alphaR;
 
+  // Convert smoothed EAR into a 0..1 blink value (1 = closed)
   let blinkL =
     1 -
     Math.max(
@@ -206,12 +220,14 @@ export const processFaceMetrics = (
       ),
     );
 
+  // Average the blink values if they are close
   if (Math.abs(blinkL - blinkR) < 0.2) {
     const avg = (blinkL + blinkR) / 2;
     blinkL = avg;
     blinkR = avg;
   }
 
+  // Brow expressions relative to baseline
   const deltaBrow = avgBrowDist - b_browDist;
   const browUp =
     deltaBrow > 0 ? Math.min(1, deltaBrow * CONFIG.BROW_UP_MULT) : 0;
@@ -222,24 +238,30 @@ export const processFaceMetrics = (
     deltaInner > 0 ? Math.min(1, deltaInner * CONFIG.BROW_KNIT_MULT) : 0;
   const browAngry = Math.min(1, browDown + browKnitted);
 
+  // Mouth open amount relative to baseline
   let mouthA = Math.max(
     0,
     Math.min(1, (mouthH - b_mouthH) * CONFIG.MOUTH_OPEN_MULT),
   );
+  // Kill tiny mouth movement within the deadzone
   if (mouthA < CONFIG.MOUTH_DEADZONE) mouthA = 0;
 
+  // Pucker amount (mouth narrower than baseline)
   let pucker = 0;
   if (mouthW < b_mouthW - 0.005) {
     pucker = Math.max(0, Math.min(1, (b_mouthW - mouthW) * CONFIG.PUCKER_MULT));
   }
 
+  // Suppress mouth-open when puckering
   let safeMouthA = mouthA;
   if (pucker > 0.1) {
     safeMouthA = Math.max(0, mouthA - pucker * CONFIG.PUCKER_SUPPRESS_MTH);
   }
 
+  // Scale pucker down by mouth-open
   const safePucker = pucker * (1 - safeMouthA * 0.6);
 
+  // Joy/sad from corner-chin distance delta
   let joy = 0;
   let sad = 0;
   const deltaCornerChin = avgCornerChinDist - b_cornerChin;
@@ -250,11 +272,15 @@ export const processFaceMetrics = (
     sad = Math.min(1, -deltaCornerChin * CONFIG.SAD_MULT);
   }
 
+  // Scale joy/sad by mouth-open
   const safeJoy = joy * (1 - safeMouthA * 0.4);
   const safeSad = sad * (1 - safeMouthA * 0.5);
+  // Combined active expression strength
   const activeExpression = Math.max(safeMouthA, safePucker, safeJoy, safeSad);
+  // Neutral weight is the complement
   const neutralWeight = Math.max(0, 1 - activeExpression);
 
+  // Return the full metrics object
   return {
     yaw: finalYaw,
     pitch: finalPitch,

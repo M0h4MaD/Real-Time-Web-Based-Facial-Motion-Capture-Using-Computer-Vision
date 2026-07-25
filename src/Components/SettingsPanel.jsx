@@ -1,8 +1,12 @@
-// src/Components/SettingsPanel.jsx
-import React from "react";
+// File: src/Components/SettingsPanel.jsx
+// Description: Floating performance settings widget (top-left). Lets the user
+// toggle camera resolution, tracking FPS, pixel ratio, hair physics, HDRI,
+// antialiasing, shadows, and clear the THREE cache.
+
 import { useUIStore } from "../lib/globalStates.js";
 import * as THREE from "three";
 import toast from "react-hot-toast";
+import "./styles/SettingsPanel.css"; // استيراد ملف التنسيق
 
 export default function SettingsPanel() {
   const isSettingsOpen = useUIStore((state) => state.isSettingsOpen);
@@ -34,107 +38,25 @@ export default function SettingsPanel() {
   };
 
   return (
-    <div
-      className="settings-widget"
-      style={{
-        position: "absolute",
-        top: "15px",
-        left: "15px",
-        zIndex: 9000,
-        fontFamily:
-          "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      }}
-    >
+    <div className="settings-widget">
       <button
         onClick={toggleSettings}
-        style={{
-          background: isSettingsOpen ? "#4ade80" : "rgba(20, 20, 22, 0.95)",
-          color: isSettingsOpen ? "#000" : "#fff",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          borderRadius: "8px",
-          width: "40px",
-          height: "40px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          fontSize: "18px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
-          transition: "all 0.2s ease",
-        }}
+        className={`settings-toggle-btn ${isSettingsOpen ? "is-open" : ""}`}
         title="Performance Settings"
       >
         ⚙️
       </button>
 
       {isSettingsOpen && (
-        <div
-          style={{
-            position: "absolute",
-            top: "50px",
-            left: "0",
-            background: "rgba(20, 20, 22, 0.95)",
-            backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "8px",
-            padding: "15px",
-            width: "230px",
-            boxShadow: "5px 5px 25px rgba(0,0,0,0.5)",
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-            animation: "fadeIn 0.2s ease-out",
-            boxSizing: "border-box",
-          }}
-        >
-          <h3
-            style={{
-              margin: "0",
-              fontSize: "13px",
-              color: "#fff",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-              paddingBottom: "8px",
-              textAlign: "center",
-              fontWeight: "600",
-              letterSpacing: "0.5px",
-            }}
-          >
-            PERFORMANCE
-          </h3>
+        <div className="settings-dropdown">
+          <h3 className="settings-title">PERFORMANCE</h3>
 
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.03)",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid rgba(255, 255, 255, 0.05)",
-            }}
-          >
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                fontSize: "12px",
-                color: "#e2e8f0",
-                fontWeight: "500",
-              }}
-            >
-              📹 Camera Resolution
-            </label>
+          <div className="settings-section">
+            <label className="settings-label">📹 Camera Resolution</label>
             <select
               value={cameraResolution}
               onChange={(e) => setCameraResolution(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "6px",
-                borderRadius: "6px",
-                background: "#2a2a2f",
-                color: "white",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                outline: "none",
-                cursor: "pointer",
-                fontSize: "12px",
-              }}
+              className="settings-select"
             >
               <option value="320x240">Low (320x240)</option>
               <option value="640x480">Medium (640x480)</option>
@@ -142,41 +64,15 @@ export default function SettingsPanel() {
             </select>
           </div>
 
-          {/* ⚡ قسم التحكم بسرعة التتبع (الجديد) */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.03)",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid rgba(255, 255, 255, 0.05)",
-            }}
-          >
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                fontSize: "12px",
-                color: "#e2e8f0",
-                fontWeight: "500",
-              }}
-            >
+          <div className="settings-section">
+            <label className="settings-label">
               🎯 Tracking FPS:{" "}
-              <span style={{ color: "#4ade80" }}>{trackingFPS}</span>
+              <span className="highlight-green">{trackingFPS}</span>
             </label>
             <select
               value={trackingFPS}
               onChange={(e) => setTrackingFPS(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "6px",
-                borderRadius: "6px",
-                background: "#2a2a2f",
-                color: "white",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                outline: "none",
-                cursor: "pointer",
-                fontSize: "12px",
-              }}
+              className="settings-select"
             >
               <option value={15}>15 FPS (Power Saver)</option>
               <option value={20}>20 FPS (Smooth Enough)</option>
@@ -186,27 +82,10 @@ export default function SettingsPanel() {
             </select>
           </div>
 
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.03)",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid rgba(255, 255, 255, 0.05)",
-            }}
-          >
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                fontSize: "12px",
-                color: "#e2e8f0",
-                fontWeight: "500",
-              }}
-            >
+          <div className="settings-section">
+            <label className="settings-label">
               🖥️ Render Quality:{" "}
-              <span style={{ color: "#c084fc", fontWeight: "bold" }}>
-                {pixelRatio}
-              </span>
+              <span className="highlight-purple">{pixelRatio}</span>
             </label>
             <input
               type="range"
@@ -215,40 +94,13 @@ export default function SettingsPanel() {
               step="0.1"
               value={pixelRatio}
               onChange={(e) => setPixelRatio(e.target.value)}
-              style={{
-                width: "100%",
-                cursor: "pointer",
-                accentColor: "#a855f7",
-              }}
+              className="settings-range"
             />
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-              background: "rgba(255, 255, 255, 0.03)",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid rgba(255, 255, 255, 0.05)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <label
-                style={{
-                  fontSize: "12px",
-                  color: "#e2e8f0",
-                  cursor: "pointer",
-                }}
-                htmlFor="hairToggle"
-              >
+          <div className="settings-section grouped">
+            <div className="settings-toggle-row">
+              <label className="settings-toggle-label" htmlFor="hairToggle">
                 💨 Hair Physics
               </label>
               <input
@@ -256,24 +108,11 @@ export default function SettingsPanel() {
                 type="checkbox"
                 checked={enableHairPhysics}
                 onChange={(e) => setEnableHairPhysics(e.target.checked)}
-                style={{ cursor: "pointer", accentColor: "#a855f7" }}
+                className="settings-checkbox"
               />
             </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <label
-                style={{
-                  fontSize: "12px",
-                  color: "#e2e8f0",
-                  cursor: "pointer",
-                }}
-                htmlFor="hdriToggle"
-              >
+            <div className="settings-toggle-row">
+              <label className="settings-toggle-label" htmlFor="hdriToggle">
                 🌍 HDRI Environment
               </label>
               <input
@@ -281,24 +120,11 @@ export default function SettingsPanel() {
                 type="checkbox"
                 checked={enableHDRI}
                 onChange={toggleHDRI}
-                style={{ cursor: "pointer", accentColor: "#a855f7" }}
+                className="settings-checkbox"
               />
             </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <label
-                style={{
-                  fontSize: "12px",
-                  color: "#e2e8f0",
-                  cursor: "pointer",
-                }}
-                htmlFor="aaToggle"
-              >
+            <div className="settings-toggle-row">
+              <label className="settings-toggle-label" htmlFor="aaToggle">
                 ✨ Antialiasing
               </label>
               <input
@@ -306,25 +132,12 @@ export default function SettingsPanel() {
                 type="checkbox"
                 checked={enableAntialias}
                 onChange={toggleAntialias}
-                style={{ cursor: "pointer", accentColor: "#a855f7" }}
+                className="settings-checkbox"
               />
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <label
-                style={{
-                  fontSize: "12px",
-                  color: "#e2e8f0",
-                  cursor: "pointer",
-                }}
-                htmlFor="shadowToggle"
-              >
+            <div className="settings-toggle-row">
+              <label className="settings-toggle-label" htmlFor="shadowToggle">
                 🌑 Shadows
               </label>
               <input
@@ -332,26 +145,12 @@ export default function SettingsPanel() {
                 type="checkbox"
                 checked={enableShadows}
                 onChange={toggleShadows}
-                style={{ cursor: "pointer", accentColor: "#a855f7" }}
+                className="settings-checkbox"
               />
             </div>
           </div>
 
-          <button
-            onClick={handleClearCache}
-            style={{
-              width: "100%",
-              padding: "8px",
-              borderRadius: "6px",
-              background: "#ef4444",
-              color: "white",
-              border: "none",
-              cursor: "pointer",
-              fontSize: "12px",
-              fontWeight: "bold",
-              marginTop: "5px",
-            }}
-          >
+          <button onClick={handleClearCache} className="settings-clear-btn">
             🧹 Clear Memory Cache
           </button>
         </div>
