@@ -1,43 +1,106 @@
-# 🎭 MocapAvatar — Real-Time Face Tracking & 3D Avatar Animation
-
-> A high-performance web application that turns your webcam into a motion-capture studio. Track your face in real-time with **MediaPipe**, drive a **3D avatar** with blendshapes & bone animation, and export your performance as JSON keyframes or WEBM video.
+# 🎭 MocapAvatar
 
 <p align="center">
-  <img src="./src/assets/hero.png" alt="MocapAvatar Demo" width="720" />
+  <b>Turn your webcam into a professional motion-capture studio.</b>
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> •
-  <a href="#demo">Demo</a> •
-  <a href="#tech-stack">Tech Stack</a> •
-  <a href="#architecture">Architecture</a> •
-  <a href="#getting-started">Getting Started</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#recording">Recording</a>
+  Real-time face tracking · 3D avatar animation · Motion-capture export
 </p>
+
+<p align="center">
+  <a href="https://react.dev"><img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white&style=for-the-badge" alt="React 19" /></a>
+  <a href="https://vitejs.dev"><img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white&style=for-the-badge" alt="Vite 8" /></a>
+  <a href="https://threejs.org"><img src="https://img.shields.io/badge/Three.js-r185-black?logo=three.js&logoColor=white&style=for-the-badge" alt="Three.js" /></a>
+  <a href="https://developers.google.com/mediapipe"><img src="https://img.shields.io/badge/MediaPipe-0.10-FF6F00?logo=google&logoColor=white&style=for-the-badge" alt="MediaPipe" /></a>
+  <a href="https://github.com/pmndrs/zustand"><img src="https://img.shields.io/badge/Zustand-5-FFD700?logo=react&logoColor=white&style=for-the-badge" alt="Zustand" /></a>
+</p>
+
+<p align="center">
+  <img src="./src/assets/hero.png" alt="MocapAvatar Demo" width="780" />
+</p>
+
+<p align="center">
+  <a href="#-what-makes-it-special">Highlights</a> ·
+  <a href="#-features">Features</a> ·
+  <a href="#-quick-start">Quick Start</a> ·
+  <a href="#-tech-stack">Tech Stack</a> ·
+  <a href="#-architecture">Architecture</a> ·
+  <a href="#-usage-guide">Usage</a> ·
+  <a href="#-recording--export">Recording</a>
+</p>
+
+---
+
+## 📋 Table of Contents
+
+- [What Makes It Special](#-what-makes-it-special)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#-architecture)
+- [Project Structure](#-project-structure)
+- [Usage Guide](#-usage-guide)
+- [Recording & Export](#-recording--export)
+- [Performance Settings](#-performance-settings)
+- [Browser Compatibility](#-browser-compatibility)
+- [How It Works](#-how-it-works)
+- [Troubleshooting](#-troubleshooting)
+- [Scripts](#-scripts)
+- [License](#-license)
+
+---
+
+## 🌟 What Makes It Special
+
+| Innovation | Description |
+|:-----------|:------------|
+| **⚡ 60fps Rendering + Tracking** | MediaPipe runs in a dedicated Web Worker so the main thread never drops a frame |
+| **🧠 Smart Motion Filtering** | Time-corrected exponential smoothing with cross-talk suppression — motion feels identical at 15fps or 60fps |
+| **💨 FPS-Independent Hair Physics** | Spring-based simulation normalized to a reference delta — silky hair motion regardless of render rate |
+| **📦 Zero-Copy Data Transfer** | Landmark arrays transferred as flat `Float32Array` via `Transferable` objects — no GC pressure |
+| **🎯 Personal Calibration** | One-click neutral-face baseline capture that adapts all expressions to your unique face geometry |
+| **🔧 Custom esbuild Bundle** | MediaPipe's WASM bundle pre-bundled as IIFE to eliminate Vite/WASM compatibility issues |
 
 ---
 
 ## ✨ Features
 
-| Feature | Description |
-|---------|-------------|
-| 🎯 **Real-Time Face Tracking** | 478-point facial landmark detection powered by **MediaPipe FaceLandmarker** with GPU acceleration |
-| 🧬 **Blendshape Animation** | Automatically maps facial expressions (blink, mouth open, joy, sad, pucker, brows) to any GLB model's morph targets |
-| 🦴 **Head Pose Estimation** | Live yaw, pitch, and roll rotation extracted from facial geometry and applied to the model's head bone |
-| 💨 **Hair Physics** | Spring-based physics simulation on hair bones driven by head rotation velocity — FPS-independent |
-| 🖥️ **3D Model Viewer** | Load custom `.glb` models (up to 50MB) with OrbitControls, shadows, and HDRI environment lighting |
-| 📊 **Live HUD** | Collapsible sidebar with real-time metric bars, FPS/memory monitoring, and blendshape inspector |
-| 🎨 **Landmark Overlays** | 7 visualization modes: Points, Wireframe, Mouth, Eyes, Cyberpunk scanner, and more |
-| 📹 **Recording System** | Export motion-capture data as **JSON keyframes** or capture **WEBM video + microphone audio** |
-| 🎛️ **Performance Settings** | Adjustable camera resolution, tracking FPS, pixel ratio, antialiasing, shadows, and HDRI |
-| 🟢 **Green Screen** | One-click chroma key background for easy compositing |
-| 🪞 **Mirror Mode** | Flip tracking direction for mirrored or direct control |
-| 🧹 **Memory Management** | Built-in cache clearing, geometry disposal, and RAM protection during recording |
+### 🎯 Face Tracking
+- **478-point facial landmark detection** powered by MediaPipe FaceLandmarker with GPU delegate acceleration
+- Real-time head pose estimation: **yaw, pitch, roll**
+- Blink detection via **Eye Aspect Ratio (EAR)** with pitch-compensated attack/release smoothing
+- Expression detection: joy, sad, pucker, brow surprised, brow angry
+- Personal calibration system for your neutral face baseline
+
+### 🧬 3D Avatar Animation
+- **Blendshape / morph-target** auto-mapping to any GLB model
+- **Head bone rotation** driven by facial geometry
+- **Spring-based hair physics** on `J_Sec_Hair*` bones
+- FPS-independent lerp smoothing for all animations
+
+### 🖥️ Visual Interface
+- **Draggable video overlay** (react-rnd) with 7 landmark visualization modes
+- **Collapsible HUD sidebar** with live metric bars, FPS/memory monitor, and blendshape inspector
+- **Green screen / chroma key** background for compositing
+- **Mirror mode** for flipped or direct control
+- **OrbitControls** for free 3D camera navigation
+
+### 📹 Recording & Export
+- **JSON Keyframes** — timestamped motion-capture data (yaw, pitch, roll, blink, mouth, expressions)
+- **WEBM Video** — canvas capture + microphone audio
+- **RAM safety cap** — auto-stops at 18,000 frames (~3 min @ 60fps)
+
+### ⚙️ Performance Control
+- Adjustable camera resolution (320×240 → 1280×720)
+- Configurable tracking FPS (15 / 20 / 25 / 30 / 60)
+- Render pixel ratio (0.5× → 2.0×)
+- Toggle antialiasing, shadows, HDRI environment, hair physics
+- One-click cache clear for THREE.js resources
 
 ---
 
-## 🚀 Demo
+## 🚀 Quick Start
 
 ```bash
 # Clone the repository
@@ -48,35 +111,29 @@ cd mid-project
 npm install
 
 # Start the development server
+# (MediaPipe bundle auto-builds via predev hook)
 npm run dev
 ```
 
-Then open your browser to `http://localhost:5173`, allow camera access, and click **"Start Tracking"**.
+Open your browser to **`http://localhost:5173`**, allow camera access, and click **"Start Tracking"**.
 
-> **Note:** The MediaPipe bundle is built automatically before dev/build via the `predev` / `prebuild` hooks.
+> **Note:** The first run builds the MediaPipe IIFE bundle (`public/mediapipe-vision-bundle.js`) automatically. You can also trigger it manually with `npm run build:mediapipe`.
 
 ---
 
 ## 🛠️ Tech Stack
 
-<p align="center">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React" />
-  <img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white" alt="Vite" />
-  <img src="https://img.shields.io/badge/Three.js-r185-black?logo=three.js&logoColor=white" alt="Three.js" />
-  <img src="https://img.shields.io/badge/MediaPipe-0.10-FF6F00?logo=google&logoColor=white" alt="MediaPipe" />
-  <img src="https://img.shields.io/badge/Zustand-5-FFD700?logo=react&logoColor=white" alt="Zustand" />
-  <img src="https://img.shields.io/badge/ESM-Module-blue" alt="ES Modules" />
-</p>
-
-- **[React 19](https://react.dev/)** — UI framework with StrictMode
-- **[Vite 8](https://vitejs.dev/)** — Lightning-fast dev server and bundler
-- **[Three.js](https://threejs.org/) + [@react-three/fiber](https://docs.pmndrs.react-three-fiber.org/)** — WebGL 3D rendering
-- **[@react-three/drei](https://github.com/pmndrs/drei)** — Stage, OrbitControls, Center, GLTF loading
-- **[MediaPipe Tasks Vision](https://developers.google.com/mediapipe/solutions/vision/face_landmarker)** — Face landmark detection (GPU delegate)
-- **[Zustand](https://github.com/pmndrs/zustand)** — Lightweight state management
-- **[react-rnd](https://github.com/bokuweb/react-rnd)** — Draggable & resizable overlay window
-- **[react-hot-toast](https://react-hot-toast.com/)** — Toast notifications (Arabic & English supported)
-- **Web Workers** — Off-main-thread landmark detection for 60fps rendering
+| Layer | Technology | Purpose |
+|:------|:-----------|:--------|
+| **UI Framework** | [React 19](https://react.dev/) | Component architecture with StrictMode |
+| **Bundler** | [Vite 8](https://vitejs.dev/) | Lightning-fast HMR & production builds |
+| **3D Engine** | [Three.js](https://threejs.org/) + [@react-three/fiber](https://docs.pmndrs.react-three-fiber.org/) | WebGL rendering & scene graph |
+| **3D Helpers** | [@react-three/drei](https://github.com/pmndrs/drei) | Stage, OrbitControls, GLTFLoader, Center |
+| **Face Tracking** | [MediaPipe Tasks Vision](https://developers.google.com/mediapipe/solutions/vision/face_landmarker) | 478-point landmark detection (GPU delegate) |
+| **State Management** | [Zustand](https://github.com/pmndrs/zustand) | Lightweight atomic stores |
+| **Notifications** | [react-hot-toast](https://react-hot-toast.com/) | Toast notifications (Arabic & English) |
+| **Overlay Window** | [react-rnd](https://github.com/bokuweb/react-rnd) | Draggable & resizable video panel |
+| **Workers** | Native Web Workers | Off-main-thread landmark detection |
 
 ---
 
@@ -125,10 +182,14 @@ Then open your browser to `http://localhost:5173`, allow camera access, and clic
 
 ### Key Design Decisions
 
-1. **Web Worker Offloading** — MediaPipe FaceLandmarker runs in a dedicated worker to keep the main thread free for 60fps rendering. Landmark data is transferred as a flat `Float32Array` (zero-copy).
-2. **FPS-Independent Animation** — All smoothing, hair physics, and blendshape lerping are normalized to a 60fps reference delta. Motion feels identical regardless of tracking FPS (15–60).
+1. **Web Worker Offloading** — MediaPipe FaceLandmarker runs in a dedicated worker (`faceLandmarker.worker.js`) to keep the main thread free for 60fps rendering. Landmark data is transferred as a flat `Float32Array` (zero-copy via `Transferable`).
+
+2. **FPS-Independent Animation** — All smoothing (`globalStates.js`), hair physics (`hairPhysicsEngine.js`), and blendshape lerping (`ModelViewer.jsx`) are normalized to a 60fps reference delta. Motion feels identical regardless of tracking FPS (15–60).
+
 3. **Smart Filter** — Time-corrected exponential smoothing with pitch damping during large yaw turns prevents axis cross-talk and jitter.
+
 4. **Memory Safety** — Automatic geometry/material disposal on model swap, blob URL revocation, and an 18,000-frame RAM cap during recording.
+
 5. **Custom esbuild Bundle** — MediaPipe's vision bundle is pre-bundled into an IIFE (`public/mediapipe-vision-bundle.js`) to resolve Vite/WASM compatibility issues.
 
 ---
@@ -182,7 +243,9 @@ mid-project/
 │   │   └── recorder.js                   # JSON keyframe & WEBM recording subsystem
 │   │
 │   └── assets/
-│       └── hero.png
+│       ├── hero.png
+│       ├── react.svg
+│       └── vite.svg
 │
 ├── vite.config.js                        # Vite config (worker ES format, MediaPipe exclusion)
 ├── eslint.config.js                      # ESLint flat config
@@ -192,21 +255,21 @@ mid-project/
 
 ---
 
-## 🎮 Usage
+## 🎮 Usage Guide
 
-### Starting Tracking
+### 🎬 Starting Tracking
 1. Click **"Start Tracking"** in the bottom-left floating button.
 2. Allow camera access when prompted.
 3. A draggable video window appears — position it anywhere on screen.
 4. Your face movements are now driving the 3D avatar in real-time!
 
-### Calibration
+### 🎯 Calibration
 1. Look straight at the camera with a **neutral expression**.
 2. Click **"Calibrate"** in the HUD panel.
 3. The button turns green (✓ Calibrated) when complete.
 4. Calibration captures your personal baseline for EAR, mouth dimensions, brow distances, and head angles — dramatically improving tracking accuracy.
 
-### Loading a Custom Model
+### 📦 Loading a Custom Model
 1. Click **"📁 Load Model"** in the HUD.
 2. Select a `.glb` file (up to 50MB).
 3. The model loads with auto-discovery of all blendshapes and head/hair bones.
@@ -217,19 +280,22 @@ mid-project/
 > - Bones named `J_Sec_Hair*` (for hair physics)
 > - Blendshape/morph targets (for facial expression mapping)
 
-### Landmark Overlay Modes
+### 🎨 Landmark Overlay Modes
 Choose from the dropdown in the HUD:
-- **🚫 OFF** — No overlay
-- **🟢 Points + Wireframe** — Full landmarks with connections
-- **🕸️ Just Wireframe** — Connections only
-- **📍 Just Points** — Landmark dots only
-- **👄 Mouth Only** — Mouth region focus
-- **👁️ Eyes Only** — Eye region focus
-- **⚡ Cyberpunk Scanner** — Neon glow wireframe effect
+
+| Mode | Visual |
+|:-----|:-------|
+| **🚫 OFF** | No overlay |
+| **🟢 Points + Wireframe** | Full landmarks with connections |
+| **🕸️ Just Wireframe** | Connections only |
+| **📍 Just Points** | Landmark dots only |
+| **👄 Mouth Only** | Mouth region focus |
+| **👁️ Eyes Only** | Eye region focus |
+| **⚡ Cyberpunk Scanner** | Neon glow wireframe effect |
 
 ---
 
-## 📹 Recording
+## 📹 Recording & Export
 
 ### JSON Keyframes (Motion Capture Data)
 1. Select **"JSON (Mocap)"** from the record mode dropdown.
@@ -237,6 +303,21 @@ Choose from the dropdown in the HUD:
 3. Perform your facial animation.
 4. Click **"Stop REC ⏹"** — the `.json` file auto-downloads.
 5. The JSON contains timestamped frames of all metrics (yaw, pitch, roll, blink, mouth, expressions).
+
+```json
+{
+  "time": 1712345678901,
+  "data": {
+    "yaw": 0.12,
+    "pitch": -0.05,
+    "roll": 0.01,
+    "blink": 0.0,
+    "mouth": 0.45,
+    "Fcl_MTH_Fun": 0.32,
+    ...
+  }
+}
+```
 
 ### WEBM Video (Screen + Microphone)
 1. Select **"WEBM (Video + Mic)"** from the record mode dropdown.
@@ -253,7 +334,7 @@ Choose from the dropdown in the HUD:
 Click the **⚙️** gear icon in the top-left to access:
 
 | Setting | Options | Effect |
-|---------|---------|--------|
+|:--------|:--------|:-------|
 | 📹 Camera Resolution | 320×240 / 640×480 / 1280×720 | Higher = more detail, more CPU |
 | 🎯 Tracking FPS | 15 / 20 / 25 / 30 / 60 | Lower = less CPU, smoother feel if under load |
 | 🖥️ Render Quality | 0.5× – 2.0× | Pixel ratio for sharpness vs. performance |
@@ -265,22 +346,10 @@ Click the **⚙️** gear icon in the top-left to access:
 
 ---
 
-## 🔧 Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server (auto-builds MediaPipe bundle first) |
-| `npm run build` | Production build (auto-builds MediaPipe bundle first) |
-| `npm run preview` | Preview production build locally |
-| `npm run lint` | Run ESLint |
-| `npm run build:mediapipe` | Manually build the MediaPipe IIFE bundle |
-
----
-
 ## 🌐 Browser Compatibility
 
 | Browser | Status | Notes |
-|---------|--------|-------|
+|:--------|:------:|:------|
 | Chrome | ✅ Fully Supported | Best performance with GPU delegate |
 | Edge | ✅ Fully Supported | Chromium-based |
 | Firefox | ⚠️ Partial | MediaPipe GPU delegate may fall back to CPU |
@@ -319,9 +388,35 @@ A time-corrected exponential filter smooths head rotations. When yaw exceeds 0.2
 
 ---
 
+## 🔧 Scripts
+
+| Command | Description |
+|:--------|:------------|
+| `npm run dev` | Start development server (auto-builds MediaPipe bundle first) |
+| `npm run build` | Production build (auto-builds MediaPipe bundle first) |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint |
+| `npm run build:mediapipe` | Manually build the MediaPipe IIFE bundle |
+
+---
+
+## 🛠️ Troubleshooting
+
+| Issue | Solution |
+|:------|:---------|
+| **Camera not working** | Ensure `getUserMedia` permissions are granted. Check browser console for HTTPS requirement (localhost is exempt). |
+| **Tracking is jittery** | Click **"Calibrate"** with a neutral face. Ensure good, even lighting on your face. |
+| **Low FPS / Lag** | Lower **Tracking FPS** to 15–20, reduce **Camera Resolution** to 640×480, or disable **Shadows** / **HDRI**. |
+| **Model doesn't animate** | Verify your GLB has a bone named `*head*` and blendshape/morph targets. Check the **Model Blendshapes** inspector. |
+| **MediaPipe fails to load** | Run `npm run build:mediapipe` manually. Ensure `public/mediapipe-vision-bundle.js` exists. |
+| **Recording stops early** | JSON mode has an 18,000-frame (~3 min) safety cap. Switch to WEBM mode for longer captures. |
+| **Out of memory** | Click **"Clear Cache"** in Settings. Close other browser tabs. Lower pixel ratio to 0.5×. |
+
+---
+
 ## 📝 License
 
-MIT © 2025
+MIT © 2026
 
 ---
 
